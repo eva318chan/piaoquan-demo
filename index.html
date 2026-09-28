@@ -6,7 +6,7 @@
 <meta property="og:title" content="講圈 · 香港人講嘢嘅短片平台">
 <meta property="og:description" content="記錄港生活，分享港味道。全年齡香港短視頻平台。">
 <meta property="og:type" content="website">
-<meta property="og:url" content="https://piaoquan-demo.vercel.app/">
+<meta property="og:url" content="https://ktalk.hk/">
 <title>講圈 · 演示版</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <meta name="description" content="講圈 — 香港人講嘢嘅短片平台（演示版）">
@@ -15,7 +15,7 @@
 <meta property="og:title" content="講圈 — 香港人講嘢嘅短片平台">
 <meta property="og:description" content="記錄港生活，分享港味道。">
 <meta property="og:image" content="https://picsum.photos/seed/gongyun/800/450">
-<meta property="og:url" content="https://piaoquan-demo.vercel.app/">
+<meta property="og:url" content="https://ktalk.hk/">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#e8e8e8;color:#222;font-size:16px}
@@ -477,6 +477,7 @@ var CREATORS=[
 var plays=134, shares=46;
 
 function streamThumb(uid){return "https://videodelivery.net/"+uid+"/thumbnails/thumbnail.jpg";}
+function videoThumb(v){return (v.stream&&v.uid)?streamThumb(v.uid):("https://picsum.photos/seed/"+encodeURIComponent(v.av+v.t.length)+"/800/450");}
 function mediaHTML(v){
  if(v.stream&&v.uid) return '<img class="sthumb" src="'+streamThumb(v.uid)+'" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display=\'none\'">';
  return '<video src="'+v.src+'" preload="metadata" playsinline loop></video>';
@@ -490,7 +491,7 @@ function renderFeed(){
    +'<div class="vmeta"><span>'+v.p+'</span><span>'+v.d+'</span></div>'
    +'<div class="bigplay"></div></div>'
    +'<div class="vfoot"><div class="author"><div class="avatar">'+v.av+'</div><span>'+v.a+'</span></div>'
-   +'<button class="sharebtn" onclick="openShare(\''+v.t.replace(/'/g,"")+'\')">分享</button></div></div>';
+   +'<button class="sharebtn" onclick="openShareV('+i+')">分享</button></div></div>';
   if((i+1)%5===0) h+='<div class="vcard adslot"><div class="adph">📢 廣告預留位<div class="adsub">正式版可接 Google AdSense／Pangle 信息流廣告</div></div></div>';
  });
  document.getElementById("feed").innerHTML=h;
@@ -559,15 +560,24 @@ function ptab(el,which){
  document.querySelectorAll(".ptab").forEach(function(t){t.classList.remove("on");});el.classList.add("on");
  document.getElementById("works").style.display=which==="works"?"grid":"none";
 }
-/* 分享 */
+/* 分享：每條片用獨立分享卡片（og 標籤），微信/WhatsApp 會顯示標題＋縮圖 */
 var _shareTitle="";
-function openShare(title){
- _shareTitle=title||"講圈短片";
- var url=location.origin+location.pathname+"#v="+encodeURIComponent(_shareTitle);
+function openShareV(i){
+ var v=VIDEOS[i];if(!v)return;
+ _shareTitle=v.t||"講圈短片";
+ var url=location.origin+"/api/share-card?t="+encodeURIComponent(_shareTitle)
+  +"&img="+encodeURIComponent(videoThumb(v))
+  +"&p="+encodeURIComponent(v.p||"");
  document.getElementById("sharelink").value=url;
  document.getElementById("mask").classList.add("show");
  document.getElementById("sheet").classList.add("show");
  shares++;document.getElementById("s-shares").textContent=shares;
+}
+function openShare(title){_shareTitle=title||"講圈短片";
+ var url=location.origin+"/api/share-card?t="+encodeURIComponent(_shareTitle);
+ document.getElementById("sharelink").value=url;
+ document.getElementById("mask").classList.add("show");
+ document.getElementById("sheet").classList.add("show");
 }
 function shareText(){var s="講圈 — 香港人講嘢嘅短片平台：「"+_shareTitle+"」 ";if(typeof _settings!=="undefined"&&_settings.shareOthers)s+="\n睇埋我其他片："+profileURL();return s;}
 function shareTo(which){
