@@ -64,6 +64,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .agree{font-size:13px;color:#999;display:flex;align-items:center;justify-content:center;gap:6px}
 .agree .ck{width:18px;height:18px;border-radius:50%;background:#07c160;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
 #fileInput{display:none}
+#recInput{display:none}
 .pubbox{background:#fff;margin:0 12px 12px;border-radius:12px;padding:14px;display:none}
 .pubbox video{width:100%;border-radius:8px;background:#000;max-height:220px}
 .pubbox input{width:100%;border:1px solid #ddd;border-radius:8px;padding:10px;margin:10px 0;font-size:15px}
@@ -219,6 +220,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
     <button class="pubbtn" onclick="publishVideo()">出片！</button>
   </div>
   <input type="file" id="fileInput" accept="video/*" onchange="onFile(this)">
+  <input type="file" id="recInput" accept="video/*" capture="environment" onchange="onFile(this)">
 </div>
 
 <!-- ============ 美文 ============ -->
@@ -658,7 +660,11 @@ function toast(msg){
 }
 /* 上传：Cloudflare Stream 直傳（direct upload）+ 本地 fallback */
 var _pendingFile=null,_streamUid=null;
-function pickFile(){document.getElementById("fileInput").click();}
+function pickFile(mode){
+ if(_sb&&!_user){toast("出片要先登入或註冊帳號");go("s-auth");return;}
+ if(mode==="rec"){document.getElementById("recInput").click();}
+ else{document.getElementById("fileInput").click();}
+}
 function onFile(inp){
  if(!inp.files||!inp.files[0])return;
  if(_sb&&!_user){toast("出片要先登入或註冊帳號");go("s-auth");inp.value="";return;}
