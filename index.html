@@ -1,9 +1,16 @@
 <!DOCTYPE html>
-<html lang="zh-CN">
+<html lang="zh-HK">
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-<title>票圈视频 · 演示版</title>
+<title>講圈 · 演示版</title>
+<meta name="description" content="講圈 — 香港人講嘢嘅短片平台（演示版）">
+<meta property="og:type" content="website">
+<meta property="og:site_name" content="講圈">
+<meta property="og:title" content="講圈 — 香港人講嘢嘅短片平台">
+<meta property="og:description" content="記錄港生活，分享港味道。">
+<meta property="og:image" content="https://picsum.photos/seed/gongyun/800/450">
+<meta property="og:url" content="https://piaoquan-demo.vercel.app/">
 <style>
 *{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
 body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#e8e8e8;color:#222;font-size:16px}
@@ -130,11 +137,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .linkrow button{background:#07c160;color:#fff;border:none;border-radius:8px;padding:0 18px;font-size:14px}
 .cancelbtn{width:100%;border:none;background:#f5f5f5;border-radius:10px;padding:13px;font-size:16px;margin-top:4px}
 .note{font-size:12px;color:#999;text-align:center;margin-top:10px;line-height:1.6}
+/* ---------- toast ---------- */
+#toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);background:rgba(0,0,0,.85);color:#fff;padding:12px 20px;border-radius:24px;font-size:14px;z-index:200;opacity:0;transition:all .25s;pointer-events:none;max-width:86%;text-align:center}
+#toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
 </style>
 </head>
 <body>
 <div id="app">
-<div class="topbar">票圈视频<span class="demo">DEMO 演示版</span></div>
+<div class="topbar">講圈<span class="demo">DEMO 演示版</span></div>
 
 <!-- ============ 首页 ============ -->
 <div class="screen active" id="s-home">
@@ -150,16 +160,16 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 <div class="screen" id="s-upload">
   <div class="upwrap">
     <div class="upcards">
-      <div class="upcard blue" onclick="pickFile('hd')">上传高清视频<small>超大超长视频</small></div>
-      <div class="upcard green" onclick="pickFile('short')">上传短视频<small>最大500MB视频</small></div>
+      <div class="upcard blue" onclick="pickFile('hd')">上傳高清短片<small>超大超長都得</small></div>
+      <div class="upcard green" onclick="pickFile('short')">上傳短片<small>最大 500MB</small></div>
     </div>
-    <button class="recbtn" onclick="pickFile('rec')">录制上传</button>
-    <div class="agree"><span class="ck">✓</span> 我已阅读并同意《软件许可及服务协议》及《隐私政策》</div>
+    <button class="recbtn" onclick="pickFile('rec')">即拍即傳</button>
+    <div class="agree"><span class="ck">✓</span> 我已閱讀並同意《軟件許可及服務協議》及《私隱政策》</div>
   </div>
   <div class="pubbox" id="pubbox">
     <video id="preview" controls playsinline></video>
-    <input id="vtitle" placeholder="给视频起个标题（比如：今天是9月28日，祝大家平安健康！）" maxlength="60">
-    <button class="pubbtn" onclick="publishVideo()">发布视频</button>
+    <input id="vtitle" placeholder="幫條片改個標題（例如：今日9月28號，祝大家身體健康！）" maxlength="60">
+    <button class="pubbtn" onclick="publishVideo()">出片！</button>
   </div>
   <input type="file" id="fileInput" accept="video/*" onchange="onFile(this)">
 </div>
@@ -173,21 +183,21 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 <div class="screen" id="s-artdetail">
   <div style="position:relative;background:#fff">
     <button class="backbtn" onclick="go('s-articles')">‹</button>
-    <div class="topbar" style="border:none">票圈视频+</div>
+    <div class="topbar" style="border:none">講圈</div>
   </div>
   <div class="art">
-    <h1>中国最长最险峻的峡谷，犹如世外桃源</h1>
-    <div class="meta">票圈原创视频精选 <span class="dt">2022年3月18日 09:00</span></div>
-    <div class="aibox">🎧 6067人 · AI摘要</div>
-    <div class="followtip">🔴⬆️ 点箭头指向的<span class="blue">蓝色小字</span>关注我</div>
-    <p class="body">北宋王希孟创作《千里江山图》，其中青绿的锦绣山河，位于中国大地西南端的怒江大峡谷。纵深2000米—3000米的大峡谷内，青绿颜色随着海拔的升高或浅或深，装点着大峡谷的壮美。</p>
-    <img class="body" src="https://picsum.photos/seed/canyon/800/450" alt="峡谷">
-    <p class="body">怒江大峡谷，最神秘、最原始古朴的大峡谷，丙察察必经之路。这里江水碧绿，两岸雪山耸立，犹如世外桃源。</p>
+    <h1>中國最長最險峻嘅峽谷，猶如世外桃源</h1>
+    <div class="meta">講圈精選 <span class="dt">2022年3月18日 09:00</span></div>
+    <div class="aibox">🎧 6067人睇過 · AI摘要</div>
+    <div class="followtip">🔴⬆️ 撳上面<span class="blue">藍色字</span>關注我</div>
+    <p class="body">北宋王希孟創作《千里江山圖》，其中青綠嘅錦繡山河，就喺中國西南端嘅怒江大峽谷。縱深2000米—3000米嘅大峽谷入面，青綠色隨住海拔時深時淺，點綴住大峽谷嘅壯美。</p>
+    <img class="body" src="https://picsum.photos/seed/canyon/800/450" alt="峽谷">
+    <p class="body">怒江大峽谷，最神秘、最原始古樸嘅大峽谷，丙察察必經之路。呢度江水碧綠，兩岸雪山聳立，猶如世外桃源。</p>
     <img class="body" src="https://picsum.photos/seed/river/800/450" alt="江水">
-    <p class="body">每天清晨，云雾在峡谷中翻涌，阳光洒在江面上，波光粼粼，美不胜收。如果你还没去过，这里值得你列入人生必去清单。</p>
+    <p class="body">每日清晨，雲霧喺峽谷中翻湧，陽光灑喺江面上，波光粼粼，美不勝收。如果未去過，呢度值得你放入人生必去清單。</p>
   </div>
   <div class="likebar">
-    <div class="src"><span class="badge">全文</span> 票圈原创视频精选 <span style="color:#1a9dff">✓</span></div>
+    <div class="src"><span class="badge">全文</span> 講圈精選 <span style="color:#1a9dff">✓</span></div>
     <button class="likebtn" id="artlike" onclick="likeArt()">👍<span class="n" id="artliken">6182</span></button>
   </div>
 </div>
@@ -202,8 +212,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
     </div>
     <div class="pstats">
       <div><b id="st-plays">134</b><br><span>播放</span></div>
-      <div><b>3</b><br><span>粉丝</span></div>
-      <div><b>4</b><br><span>关注</span></div>
+      <div><b>3</b><br><span>粉絲</span></div>
+      <div><b>4</b><br><span>關注</span></div>
     </div>
   </div>
   <div class="ptabs">
@@ -212,38 +222,61 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
   </div>
   <div class="works" id="works"></div>
   <div class="menu">
-    <div class="mi" onclick="go('s-stats')">📊 统计数据 <span class="arr">›</span></div>
-    <div class="mi">✏️ 修改个人信息 <span class="arr">›</span></div>
-    <div class="mi">💰 我的收益 <span class="arr">›</span></div>
-    <div class="mi">💬 评论管理 <span class="arr">›</span></div>
-    <div class="mi">❓ 帮助与反馈 <span class="arr">›</span></div>
-    <div class="mi">🔗 获取个人页面路径 <span class="arr">›</span></div>
-    <div class="mi">📤 分享的视频带有我的其他视频 <span class="tick"></span></div>
-    <div class="mi">🔔 接收关注更新提醒 <span class="tick"></span></div>
+    <div class="mi" onclick="go('s-stats')">📊 數據統計 <span class="arr">›</span></div>
+    <div class="mi">✏️ 改個人資料 <span class="arr">›</span></div>
+    <div class="mi">💰 我嘅收益 <span class="arr">›</span></div>
+    <div class="mi">💬 留言管理 <span class="arr">›</span></div>
+    <div class="mi">❓ 幫助與意見 <span class="arr">›</span></div>
+    <div class="mi" onclick="go('s-disclaimer')">📜 免責聲明及版權條款 <span class="arr">›</span></div>
+    <div class="mi">🔗 攞個人主頁連結 <span class="arr">›</span></div>
+    <div class="mi">📤 分享嘅短片會帶埋我其他片 <span class="tick"></span></div>
+    <div class="mi">🔔 接收關注更新通知 <span class="tick"></span></div>
   </div>
-  <div class="piaohao">票圈号：84a113104747（演示）</div>
+  <div class="piaohao">講圈號：84a113104747（演示）</div>
 </div>
 
 <!-- ============ 统计数据 ============ -->
 <div class="screen" id="s-stats">
   <div style="position:relative;background:#fff">
     <button class="backbtn" onclick="go('s-profile')">‹</button>
-    <div class="topbar" style="border:none">统计数据</div>
+    <div class="topbar" style="border:none">數據統計</div>
   </div>
   <div class="statgrid">
-    <div class="scard"><div class="lb">累计被播放数</div><div class="vl" id="s-plays">134</div><div class="yd">昨日新增 0</div></div>
-    <div class="scard"><div class="lb">粉丝数</div><div class="vl">3</div><div class="yd">昨日新增 0</div></div>
-    <div class="scard"><div class="lb">被收藏数</div><div class="vl">1</div><div class="yd">昨日新增 0</div></div>
-    <div class="scard"><div class="lb">被分享数</div><div class="vl" id="s-shares">46</div><div class="yd">昨日新增 0</div></div>
+    <div class="scard"><div class="lb">總播放次數</div><div class="vl" id="s-plays">134</div><div class="yd">尋日新增 0</div></div>
+    <div class="scard"><div class="lb">粉絲數</div><div class="vl">3</div><div class="yd">尋日新增 0</div></div>
+    <div class="scard"><div class="lb">被收藏次數</div><div class="vl">1</div><div class="yd">尋日新增 0</div></div>
+    <div class="scard"><div class="lb">被分享次數</div><div class="vl" id="s-shares">46</div><div class="yd">尋日新增 0</div></div>
   </div>
   <div class="sect">
-    <h3>近7日数据趋势</h3>
-    <div style="font-size:14px;color:#07c160;font-weight:700;margin:12px 0 4px">视频播放数</div>
+    <h3>近7日數據走勢</h3>
+    <div style="font-size:14px;color:#07c160;font-weight:700;margin:12px 0 4px">短片播放數</div>
     <svg class="chart" id="c1" viewBox="0 0 340 150"></svg>
-    <div style="font-size:14px;color:#f5a623;font-weight:700;margin:12px 0 4px">净增粉丝数</div>
+    <div style="font-size:14px;color:#f5a623;font-weight:700;margin:12px 0 4px">粉絲淨增長</div>
     <svg class="chart" id="c2" viewBox="0 0 340 150"></svg>
-    <div style="font-size:14px;color:#4a90ff;font-weight:700;margin:12px 0 4px">发视频数</div>
+    <div style="font-size:14px;color:#4a90ff;font-weight:700;margin:12px 0 4px">出片數</div>
     <svg class="chart" id="c3" viewBox="0 0 340 150"></svg>
+  </div>
+  <div style="height:20px"></div>
+</div>
+
+<!-- ============ 免責聲明及版權條款 ============ -->
+<div class="screen" id="s-disclaimer">
+  <div style="position:relative;background:#fff">
+    <button class="backbtn" onclick="go('s-profile')">‹</button>
+    <div class="topbar" style="border:none">免責聲明及版權條款</div>
+  </div>
+  <div class="art">
+    <h1>免責聲明</h1>
+    <p class="body">1. 「講圈」現為演示版，所有功能及內容僅作展示用途。</p>
+    <p class="body">2. 平台上嘅短片、文章及留言由用戶提供，內容只代表發佈者個人意見，同本平台立場無關。</p>
+    <p class="body">3. 本平台唔保證內容嘅準確性同完整性，用戶須自行判斷；因使用本平台而引致嘅任何損失，本平台概不負責。</p>
+    <p class="body">4. 演示版資料只儲存喺你部手機，唔會上傳去任何伺服器。</p>
+    <h1 style="margin-top:26px">版權條款</h1>
+    <p class="body">1. 上傳內容即代表你確認擁有該內容嘅版權，或已獲版權持有人授權分享，並同意授權本平台展示該內容。</p>
+    <p class="body">2. 請勿上傳侵犯他人版權、私隱或其他權利嘅內容，包括未經授權嘅影片、音樂、圖片同文字。</p>
+    <p class="body">3. 如發現平台上有侵犯你版權嘅內容，請聯絡我哋並提供證明，我哋會盡快移除。</p>
+    <p class="body">4. 違規內容一經發現會被移除，嚴重者會被停用帳號。</p>
+    <p class="body" style="color:#999;font-size:14px;margin-top:20px">最後更新：2026年9月28日</p>
   </div>
   <div style="height:20px"></div>
 </div>
@@ -252,47 +285,48 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 
 <!-- 底部导航 -->
 <div class="tabbar">
-  <div class="tab on" onclick="go('s-home',this)"><span class="ic">🏠</span>首页</div>
-  <div class="tab" onclick="go('s-follow',this)"><span class="ic">👁️</span>关注</div>
-  <div class="tab center" onclick="go('s-upload',this)"><span class="ic">🎬</span>发视频</div>
-  <div class="tab" onclick="go('s-articles',this)"><span class="ic">💬</span>美文</div>
-  <div class="tab" onclick="go('s-profile',this)"><span class="ic">👤</span>我的</div>
+  <div class="tab on" onclick="go('s-home',this)"><span class="ic">🏠</span>首頁</div>
+  <div class="tab" onclick="go('s-follow',this)"><span class="ic">👁️</span>關注</div>
+  <div class="tab center" onclick="go('s-upload',this)"><span class="ic">🎬</span>拍片</div>
+  <div class="tab" onclick="go('s-articles',this)"><span class="ic">💬</span>好文</div>
+  <div class="tab" onclick="go('s-profile',this)"><span class="ic">👤</span>我嘅</div>
 </div>
 
 <!-- 分享弹窗 -->
 <div class="mask" id="mask" onclick="closeShare()"></div>
 <div class="sheet" id="sheet">
-  <h3>分享视频</h3>
-  <div class="linkrow"><input id="sharelink" readonly value=""><button onclick="copyLink()">复制</button></div>
+  <h3>分享短片</h3>
+  <div class="linkrow"><input id="sharelink" readonly value=""><button onclick="copyLink()">複製</button></div>
   <div class="opts">
-    <div class="opt"><div class="oic">💬</div>微信群友</div>
-    <div class="opt"><div class="oic">⭕</div>朋友圈</div>
-    <div class="opt"><div class="oic gray">🔗</div>复制链接</div>
+    <div class="opt" onclick="shareTo('wa')"><div class="oic" style="background:#25D366">💬</div>WhatsApp</div>
+    <div class="opt" onclick="shareTo('fb')"><div class="oic" style="background:#1877F2">📘</div>Facebook</div>
+    <div class="opt" onclick="copyLink()"><div class="oic gray">🔗</div>複製連結</div>
   </div>
-  <div class="note">演示版暂用网页链接分享<br>正式版可接微信小程序卡片分享</div>
+  <div class="note">IG 冇得直接分享網頁，撳「複製連結」再貼去 IG Story / Bio 就得<br>演示版暫用網頁連結分享</div>
   <button class="cancelbtn" onclick="closeShare()">取消</button>
 </div>
+<div id="toast"></div>
 
 <script>
 var VIDEOS=[
- {t:"各位退休的同学，请听！",p:"100000+次播放",d:"00:30",a:"音乐阁里的野马",av:"乐",src:"https://samplelib.com/mp4/sample-30s.mp4"},
- {t:"🌹🌹今天是9月28日，愿家人朋友平安健康，万事顺心如意！",p:"50983次播放",d:"00:15",a:"细品岁月",av:"细",src:"https://samplelib.com/mp4/sample-15s.mp4"},
- {t:"🔥哇！厉害！大开眼界啦！",p:"32871次播放",d:"00:20",a:"开心每一天",av:"开",src:"https://samplelib.com/mp4/sample-20s.mp4"},
- {t:"八段锦教学：每天十分钟，越练越年轻",p:"45210次播放",d:"00:10",a:"健康养生堂",av:"健",src:"https://samplelib.com/mp4/sample-10s.mp4"},
- {t:"戏曲名段欣赏：经典老戏重温",p:"28754次播放",d:"00:05",a:"梨园春色",av:"梨",src:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"},
+ {t:"各位退休嘅老友，聽我講！",p:"100000+次播放",d:"00:30",a:"音樂閣嘅野馬",av:"樂",src:"https://samplelib.com/mp4/sample-30s.mp4"},
+ {t:"🌹🌹今日9月28號，祝家人朋友身體健康，萬事如意！",p:"50983次播放",d:"00:15",a:"細味歲月",av:"細",src:"https://samplelib.com/mp4/sample-15s.mp4"},
+ {t:"🔥哇！勁！大開眼界！",p:"32871次播放",d:"00:20",a:"開心每一天",av:"開",src:"https://samplelib.com/mp4/sample-20s.mp4"},
+ {t:"八段錦教學：每日十分鐘，越練越後生",p:"45210次播放",d:"00:10",a:"健康養生堂",av:"健",src:"https://samplelib.com/mp4/sample-10s.mp4"},
+ {t:"粵曲名段欣賞：經典重溫",p:"28754次播放",d:"00:05",a:"梨園春色",av:"梨",src:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"},
  {t:"《蝶变》：徐克最癫狂的处女作，改写香港武侠片规则！",p:"9次播放",d:"00:05",a:"香港 - 孔令江 Eddie",av:"孔",src:"https://samplelib.com/mp4/sample-5s.mp4",mine:true},
  {t:"圣方济各大学毕业作品展 2026 DESIGN WEEK",p:"8次播放",d:"00:05",a:"香港 - 孔令江 Eddie",av:"孔",src:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",mine:true}
 ];
 var ARTICLES=[
- {t:"中国最长最险峻的峡谷",s:"中国最长最险峻的峡谷，犹如世外桃源",d:"2026/06/26",img:"https://picsum.photos/seed/canyon/800/450",detail:true},
- {t:"原来裤子上的2根绳子，这样系才正确",s:"很多人都不知道，原来裤子上的2根绳子，这样系才正…",d:"2026/06/26",img:"https://picsum.photos/seed/pants/800/450"},
- {t:"早起三不要，晚上三不宜，老人要记住",s:"医生提醒：这6个习惯，关系到晚年健康…",d:"2026/06/25",img:"https://picsum.photos/seed/health/800/450"}
+ {t:"中國最長最險峻嘅峽谷",s:"中國最長最險峻嘅峽谷，猶如世外桃源",d:"2026/06/26",img:"https://picsum.photos/seed/canyon/800/450",detail:true},
+ {t:"原來條褲嗰兩條繩，要咁綁先啱",s:"好多人都唔知，原來條褲嗰兩條繩，要咁綁先…",d:"2026/06/26",img:"https://picsum.photos/seed/pants/800/450"},
+ {t:"早起三唔要，夜晚三唔宜，老人家要記住",s:"醫生提提你：呢6個習慣，關乎晚年健康…",d:"2026/06/25",img:"https://picsum.photos/seed/health/800/450"}
 ];
 var CREATORS=[
- {n:"音乐阁里的野马",av:"乐",s:"12.6万粉丝 · 328个作品",f:true},
- {n:"细品岁月",av:"细",s:"8.3万粉丝 · 156个作品",f:true},
- {n:"票圈原创视频精选",av:"票",s:"256万粉丝 · 1.2万个作品",f:false},
- {n:"健康养生堂",av:"健",s:"45万粉丝 · 890个作品",f:false}
+ {n:"音樂閣嘅野馬",av:"樂",s:"12.6萬粉絲 · 328個作品",f:true},
+ {n:"細味歲月",av:"細",s:"8.3萬粉絲 · 156個作品",f:true},
+ {n:"講圈精選",av:"講",s:"256萬粉絲 · 1.2萬個作品",f:false},
+ {n:"健康養生堂",av:"健",s:"45萬粉絲 · 890個作品",f:false}
 ];
 var plays=134, shares=46;
 
@@ -318,15 +352,15 @@ function renderFollow(){
  var h="";
  CREATORS.forEach(function(c,i){
   h+='<div class="creator"><div class="avatar">'+c.av+'</div><div class="info"><div class="nm">'+c.n+'</div><div class="st">'+c.s+'</div></div>'
-  +'<button class="fbtn'+(c.f?" followed":"")+'" onclick="toggleF('+i+',this)">'+(c.f?"已关注":"+ 关注")+'</button></div>';
+  +'<button class="fbtn'+(c.f?" followed":"")+'" onclick="toggleF('+i+',this)">'+(c.f?"已關注":"+ 關注")+'</button></div>';
  });
  document.getElementById("followlist").innerHTML=h;
 }
-function toggleF(i,b){CREATORS[i].f=!CREATORS[i].f;b.classList.toggle("followed");b.textContent=CREATORS[i].f?"已关注":"+ 关注";}
+function toggleF(i,b){CREATORS[i].f=!CREATORS[i].f;b.classList.toggle("followed");b.textContent=CREATORS[i].f?"已關注":"+ 關注";}
 function renderArts(){
  var h="";
  ARTICLES.forEach(function(a){
-  h+='<div class="acard" '+(a.detail?'onclick="go(\'s-artdetail\')"':"")+'><img src="'+a.img+'"><div class="abody"><div class="at">'+a.t+'</div><div class="as">'+a.s+'</div><div class="afoot"><span>'+a.d+'</span><span class="more">查看详情</span></div></div></div>';
+  h+='<div class="acard" '+(a.detail?'onclick="go(\'s-artdetail\')"':"")+'><img src="'+a.img+'"><div class="abody"><div class="at">'+a.t+'</div><div class="as">'+a.s+'</div><div class="afoot"><span>'+a.d+'</span><span class="more">睇詳情</span></div></div></div>';
  });
  document.getElementById("artlist").innerHTML=h;
 }
@@ -349,14 +383,35 @@ function ptab(el,which){
  document.getElementById("works").style.display=which==="works"?"grid":"none";
 }
 /* 分享 */
+var _shareTitle="";
 function openShare(title){
- document.getElementById("sharelink").value=location.origin+location.pathname+"#v="+encodeURIComponent(title||"");
+ _shareTitle=title||"講圈短片";
+ var url=location.origin+location.pathname+"#v="+encodeURIComponent(_shareTitle);
+ document.getElementById("sharelink").value=url;
  document.getElementById("mask").classList.add("show");
  document.getElementById("sheet").classList.add("show");
  shares++;document.getElementById("s-shares").textContent=shares;
 }
+function shareText(){return "講圈 — 香港人講嘢嘅短片平台：「"+_shareTitle+"」 ";}
+function shareTo(which){
+ var url=document.getElementById("sharelink").value;
+ if(which==="wa") window.open("https://wa.me/?text="+encodeURIComponent(shareText()+url),"_blank");
+ else if(which==="fb") window.open("https://www.facebook.com/sharer/sharer.php?u="+encodeURIComponent(url),"_blank");
+}
+function copyLink(){
+ var url=document.getElementById("sharelink").value;
+ var done=function(){toast("連結 copy 咗，貼去 WhatsApp、Facebook、IG 都得");};
+ if(navigator.clipboard&&navigator.clipboard.writeText){
+  navigator.clipboard.writeText(shareText()+url).then(done).catch(function(){fallback();});
+ }else{fallback();}
+ function fallback(){var i=document.getElementById("sharelink");i.select();try{document.execCommand("copy");}catch(e){}done();}
+}
 function closeShare(){document.getElementById("mask").classList.remove("show");document.getElementById("sheet").classList.remove("show");}
-function copyLink(){var i=document.getElementById("sharelink");i.select();try{document.execCommand("copy");}catch(e){}alert("链接已复制，去微信粘贴分享吧！");}
+function toast(msg){
+ var t=document.getElementById("toast");
+ t.textContent=msg;t.classList.add("show");
+ clearTimeout(t._h);t._h=setTimeout(function(){t.classList.remove("show");},2200);
+}
 /* 上传 */
 function pickFile(){document.getElementById("fileInput").click();}
 function onFile(inp){
@@ -367,7 +422,7 @@ function onFile(inp){
  document.getElementById("pubbox").scrollIntoView();
 }
 function publishVideo(){
- var t=document.getElementById("vtitle").value.trim()||"我的新视频";
+ var t=document.getElementById("vtitle").value.trim()||"我嘅新短片";
  var src=document.getElementById("preview").src;
  VIDEOS.unshift({t:t,p:"0次播放",d:"--:--",a:"香港 - 孔令江 Eddie",av:"孔",src:src,mine:true});
  plays+=1;
@@ -376,7 +431,7 @@ function publishVideo(){
  renderFeed();renderWorks();
  document.getElementById("pubbox").style.display="none";
  document.getElementById("vtitle").value="";
- alert("发布成功！已出现在首页和你的作品里。");
+ alert("出片成功！已經喺首頁同你嘅作品出現。");
  go("s-home",document.querySelectorAll(".tab")[0]);
 }
 /* 文章点赞 */
