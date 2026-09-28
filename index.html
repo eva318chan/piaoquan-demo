@@ -772,7 +772,7 @@ async function publishVideo(){
  document.getElementById("pubbox").style.display="none";
  document.getElementById("vtitle").value="";
  _pendingFile=null;_streamUid=null;
- alert("出片成功！已經喺首頁同你嘅作品出現。");
+ toast("出片成功！已經喺首頁同你嘅作品出現。");
  go("s-home",document.querySelectorAll(".tab")[0]);
 }
 /* ---------- 我：個人資料 / 設定 ---------- */
@@ -937,6 +937,7 @@ async function doAuth(){
   }
   await refreshSbToken();
   await loadSbProfile();
+  fillEditForm();
   renderAuthArea();
   go("s-profile");
  }catch(e){
