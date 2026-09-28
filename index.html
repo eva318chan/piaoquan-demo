@@ -9,6 +9,7 @@
 <meta property="og:url" content="https://ktalk.hk/">
 <title>講圈 · 演示版</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
 <meta name="description" content="講圈 — 香港人講嘢嘅短片平台（演示版）">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="講圈">
@@ -121,6 +122,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .mi .tick.on{background:#07c160}
 .mi .tick.on::after{left:22px}
 .minote{background:#fff;padding:10px 18px 14px;font-size:12px;color:#bbb;border-bottom:1px solid #f5f5f5}
+.ainput{width:100%;border:1px solid #ddd;border-radius:10px;padding:12px;font-size:16px;box-sizing:border-box}
+.abtn{width:100%;background:#07c160;color:#fff;border:none;border-radius:28px;padding:14px;font-size:16px;font-weight:700;margin-top:18px}
+.alabel{font-size:13px;color:#888;margin-bottom:6px}
 /* ---------- 我：個人資料/幫助/收益/留言 ---------- */
 .pform{background:#fff;padding:6px 18px 4px}
 .pform .flab{font-size:14px;color:#888;margin:18px 0 8px}
@@ -281,6 +285,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
     <div class="minote">正式版生效：到時用嚟開關推送通知，你嘅選擇會記住</div>
   </div>
   <div class="piaohao">講圈號：84a113104747（演示）</div>
+  <div id="auth-area"></div>
+</div>
+
+<!-- ============ 登入／註冊 ============ -->
+<div class="screen" id="s-auth">
+  <div style="position:relative;background:#fff">
+    <button class="backbtn" onclick="go('s-profile')">‹</button>
+    <div class="stitle" id="auth-title">登入講圈</div>
+  </div>
+  <div style="padding:20px 18px;max-width:480px">
+    <div id="auth-nick-row" style="display:none;margin-bottom:12px">
+      <div class="alabel">暱稱</div>
+      <input id="auth-nick" class="ainput" placeholder="大家點叫你" maxlength="20">
+    </div>
+    <div class="alabel">電郵</div>
+    <input id="auth-email" class="ainput" type="email" placeholder="you@example.com" autocomplete="email">
+    <div class="alabel" style="margin-top:12px">密碼</div>
+    <input id="auth-pass" class="ainput" type="password" placeholder="至少6個字" autocomplete="current-password">
+    <button class="abtn" id="auth-go" onclick="doAuth()">登入</button>
+    <div style="text-align:center;margin-top:16px;font-size:14px;color:#888">
+      <span id="auth-switch-q">未有帳號？</span>
+      <a href="javascript:toggleAuthMode()" id="auth-switch" style="color:#07c160;font-weight:700;text-decoration:none">立即註冊</a>
+    </div>
+    <div style="text-align:center;margin-top:12px;font-size:12px;color:#bbb">註冊後就可以出片，一個電郵一個帳號</div>
+  </div>
 </div>
 
 <!-- ============ 统计数据 ============ -->
@@ -632,6 +661,7 @@ var _pendingFile=null,_streamUid=null;
 function pickFile(){document.getElementById("fileInput").click();}
 function onFile(inp){
  if(!inp.files||!inp.files[0])return;
+ if(_sb&&!_user){toast("出片要先登入或註冊帳號");go("s-auth");inp.value="";return;}
  _pendingFile=inp.files[0];_streamUid=null;
  var url=URL.createObjectURL(_pendingFile);
  document.getElementById("preview").src=url;
@@ -650,7 +680,7 @@ function startStreamUpload(file){
  /* 本地 file:// 預覽或冇 API 嘅環境：跳過，直接用本地模式 */
  if(location.protocol.indexOf("http")!==0){return;}
  prog.style.display="block";stat.textContent="準備緊雲端上傳…";
- fetch("/api/direct-upload",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({title:file.name||"講圈短片"})})
+ fetch("/api/direct-upload",{method:"POST",headers:(function(){var h={"Content-Type":"application/json"};if(_sbToken)h["x-sb-token"]=_sbToken;return h;})(),body:JSON.stringify({title:file.name||"講圈短片"})})
  .then(function(r){return r.json();})
  .then(function(j){
   if(!j||!j.ok||!j.uploadURL){streamFail((j&&j.error)||"未知錯誤");return;}
@@ -676,15 +706,21 @@ function startStreamUpload(file){
  })
  .catch(function(){streamFail("網絡問題");});
 }
-function publishVideo(){
+async function publishVideo(){
+ if(_sb&&!_user){toast("請先登入或註冊先可以出片");go("s-auth");return;}
  var t=document.getElementById("vtitle").value.trim()||"我嘅新短片";
+ var aname=(_user&&_sbProfile&&_sbProfile.nickname)||_profile.name||"香港 - 孔令江 Eddie";
+ var aav=(aname.trim().charAt(0))||"孔";
  var v;
  if(_streamUid){
-  v={t:t,p:"0次播放",d:"--:--",a:"香港 - 孔令江 Eddie",av:"孔",uid:_streamUid,mine:true,stream:true};
+  v={t:t,p:"0次播放",d:"--:--",a:aname,av:aav,uid:_streamUid,mine:true,stream:true};
+  if(_sb&&_user){
+   try{await sbk().from("videos").insert({user_id:_user.id,title:t,stream_uid:_streamUid});}catch(e){}
+  }
  }else{
   /* fallback：冇雲端 uid 就用返原本本地 blob 預覽 */
   var src=document.getElementById("preview").src;
-  v={t:t,p:"0次播放",d:"--:--",a:"香港 - 孔令江 Eddie",av:"孔",src:src,mine:true};
+  v={t:t,p:"0次播放",d:"--:--",a:aname,av:aav,src:src,mine:true};
  }
  VIDEOS.unshift(v);
  plays+=1;
@@ -725,14 +761,17 @@ function fillEditForm(){
  markPills("ep-age",_profile.age?[_profile.age]:[]);
  markPills("ep-tags",_profile.tags||[]);
 }
-function saveProfile(){
+async function saveProfile(){
  _profile.name=document.getElementById("ep-name").value.trim()||"香港 - 孔令江 Eddie";
  _profile.bio=document.getElementById("ep-bio").value.trim();
  var g=document.querySelector("#ep-gender .pill.on");_profile.gender=g?g.getAttribute("data-v"):"";
  var a=document.querySelector("#ep-age .pill.on");_profile.age=a?a.getAttribute("data-v"):"";
  _profile.tags=[];document.querySelectorAll("#ep-tags .pill.on").forEach(function(p){_profile.tags.push(p.getAttribute("data-v"));});
  try{localStorage.setItem("kongtalk_profile",JSON.stringify(_profile));}catch(e){}
- applyProfile();toast("個人資料已保存");go("s-profile");
+ if(_sb&&_user){
+  try{await sbk().from("profiles").upsert({id:_user.id,nickname:_profile.name,avatar_text:((_profile.name||"講").trim().charAt(0))||"講",bio:_profile.bio||""});_sbProfile=Object.assign(_sbProfile||{},{nickname:_profile.name,bio:_profile.bio});}catch(e){}
+ }
+ applyProfile();renderAuthArea();toast("個人資料已保存");go("s-profile");
 }
 function toggleSetting(key){
  _settings[key]=!_settings[key];
@@ -805,6 +844,126 @@ applyProfile();applySettings();initEditForm();
 chart("c1",[3,0,9,0,0,0,0],"#07c160");
 chart("c2",[0,0,1,0,0,0,0],"#f5a623");
 chart("c3",[0,0,1,0,0,0,0],"#4a90ff");
+/* ---------- Supabase 會員系統 ---------- */
+var _sb=null,_user=null,_sbProfile=null,_sbToken=null;
+try{
+ _sb=window.supabase.createClient(
+  "https://fksifariaiivtxsahaot.supabase.co",
+  "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZrc2lmYXJpYWlpdnR4c2FoYW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MzUzMDEsImV4cCI6MjEwNjExMTMwMX0.oqG3o2q0TsTLj76asJl3-b3tV4v3umrPjiChBah1iNE"
+ );
+}catch(e){_sb=null;}
+function sbk(){return _sb.schema("ktalk");}
+function escHtml(s){return String(s==null?"":s).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+async function refreshSbToken(){
+ try{
+  var s=_sb?await _sb.auth.getSession():null;
+  _sbToken=(s&&s.data&&s.data.session)?s.data.session.access_token:null;
+ }catch(e){_sbToken=null;}
+}
+var _authMode="login";
+function toggleAuthMode(){
+ _authMode=_authMode==="login"?"register":"login";
+ var reg=_authMode==="register";
+ document.getElementById("auth-title").textContent=reg?"註冊講圈帳號":"登入講圈";
+ document.getElementById("auth-nick-row").style.display=reg?"block":"none";
+ document.getElementById("auth-go").textContent=reg?"註冊":"登入";
+ document.getElementById("auth-switch-q").textContent=reg?"已有帳號？":"未有帳號？";
+ document.getElementById("auth-switch").textContent=reg?"直接登入":"立即註冊";
+}
+async function doAuth(){
+ if(!_sb){toast("會員系統連接緊，請稍後再試");return;}
+ var email=document.getElementById("auth-email").value.trim();
+ var pass=document.getElementById("auth-pass").value;
+ if(!email||!pass){toast("請填電郵同密碼");return;}
+ var btn=document.getElementById("auth-go");btn.disabled=true;btn.textContent="處理緊…";
+ try{
+  if(_authMode==="register"){
+   if(pass.length<6){toast("密碼至少6個字");return;}
+   var nick=document.getElementById("auth-nick").value.trim()||email.split("@")[0];
+   var r=await _sb.auth.signUp({email:email,password:pass});
+   if(r.error)throw r.error;
+   if(!r.data.session){toast("註冊成功！請去電郵撳確認連結，再返嚟登入");_authMode="login";toggleAuthMode();return;}
+   _user=r.data.user;
+   try{await sbk().from("profiles").upsert({id:_user.id,nickname:nick,avatar_text:(nick.charAt(0)||"講")});}catch(e){}
+   toast("註冊成功，歡迎 "+nick+"！");
+  }else{
+   var r2=await _sb.auth.signInWithPassword({email:email,password:pass});
+   if(r2.error)throw r2.error;
+   _user=r2.data.user;
+   toast("登入成功！");
+  }
+  await refreshSbToken();
+  await loadSbProfile();
+  renderAuthArea();
+  go("s-profile");
+ }catch(e){
+  var m=(e&&e.message)||"請再試";
+  if(/Invalid login credentials/i.test(m))m="電郵或密碼唔啱";
+  else if(/already registered|already exists|duplicate/i.test(m))m="呢個電郵註冊咗，直接登入啦";
+  toast("失敗："+m);
+ }finally{btn.disabled=false;btn.textContent=_authMode==="register"?"註冊":"登入";}
+}
+async function loadSbProfile(){
+ if(!_sb||!_user)return;
+ try{
+  var r=await sbk().from("profiles").select("*").eq("id",_user.id).single();
+  if(r.data){
+   _sbProfile=r.data;
+   if(r.data.nickname)_profile.name=r.data.nickname;
+   if(r.data.bio!=null)_profile.bio=r.data.bio;
+   applyProfile();
+  }
+ }catch(e){}
+}
+async function doLogout(){
+ try{if(_sb)await _sb.auth.signOut();}catch(e){}
+ _user=null;_sbProfile=null;_sbToken=null;
+ _profile={name:"香港 - 孔令江 Eddie",bio:"",gender:"",age:"",tags:[]};
+ try{var _p=JSON.parse(localStorage.getItem("kongtalk_profile")||"null");if(_p)_profile=_p;}catch(e){}
+ applyProfile();renderAuthArea();fillEditForm();toast("已登出");
+}
+function renderAuthArea(){
+ var el=document.getElementById("auth-area");if(!el)return;
+ if(_user){
+  var nick=(_sbProfile&&_sbProfile.nickname)||_profile.name||"講圈用戶";
+  el.innerHTML='<div class="mi"><span>👤 '+escHtml(nick)+'</span><span style="font-size:12px;color:#bbb">'+escHtml(_user.email||"")+'</span></div>'
+   +'<div class="mi" onclick="doLogout()">🚪 登出 <span class="arr">›</span></div>';
+ }else{
+  el.innerHTML='<div class="mi" onclick="go(\'s-auth\')">👤 登入／註冊 <span class="arr">›</span></div>';
+ }
+}
+/* 社群影片：載入所有會員上傳嘅片 */
+async function loadCommunity(){
+ if(!_sb)return;
+ try{
+  var r=await sbk().from("videos").select("title,stream_uid,plays,user_id,created_at").order("created_at",{ascending:false}).limit(40);
+  var rows=r.data||[];if(!rows.length)return;
+  var um={};rows.forEach(function(x){um[x.user_id]=1;});
+  var pr=await sbk().from("profiles").select("id,nickname").in("id",Object.keys(um));
+  var pmap={};(pr.data||[]).forEach(function(p){pmap[p.id]=p.nickname;});
+  var seen={};VIDEOS.forEach(function(v){if(v.uid)seen[v.uid]=1;});
+  var fresh=[];
+  rows.forEach(function(x){
+   if(!x.stream_uid||seen[x.stream_uid])return;
+   seen[x.stream_uid]=1;
+   var nick=pmap[x.user_id]||"講圈用戶";
+   fresh.push({t:x.title||"講圈短片",p:(x.plays||0)+"次播放",d:"--:--",a:nick,av:(nick.charAt(0)||"講"),uid:x.stream_uid,stream:true,community:true});
+  });
+  if(fresh.length){VIDEOS=fresh.concat(VIDEOS);renderFeed();renderWorks();}
+ }catch(e){}
+}
+/* 開機：還原登入狀態＋載入社群影片 */
+(async function(){
+ renderAuthArea();
+ if(!_sb)return;
+ try{
+  var s=await _sb.auth.getSession();
+  if(s.data&&s.data.session){_user=s.data.session.user;await refreshSbToken();await loadSbProfile();}
+ }catch(e){}
+ renderAuthArea();
+ loadCommunity();
+})();
+
 /* 分享 deep link：#v=片名 → 自動碌去嗰條片並播放；#u= → 去「我」頁 */
 (function(){
  try{
