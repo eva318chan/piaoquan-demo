@@ -9,12 +9,23 @@ module.exports = (req, res) => {
   var img = String(q.img || "");
   var p = String(q.p || "").slice(0, 30);
   var others = String(q.others === undefined ? "1" : q.others) !== "0";
+  // 直接 mp4 連結（有先會加 og:video，Facebook 先會內嵌播放條片）
+  var vsrc = String(q.vsrc || "");
+  if (!/^https:\/\//i.test(vsrc)) vsrc = "";
   // 只接受 https 圖片，防 XSS / open redirect
   if (!/^https:\/\//i.test(img)) img = "https://picsum.photos/seed/kongtalk/800/450";
   var esc = function (s) {
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   };
   var desc = "記錄港生活，分享港味道。" + (p ? "（" + p + "）" : "");
+  var ogtype = vsrc ? "video.other" : "website";
+  var ogvideo = vsrc
+    ? '<meta property="og:video" content="' + esc(vsrc) + '">' +
+      '<meta property="og:video:secure_url" content="' + esc(vsrc) + '">' +
+      '<meta property="og:video:type" content="video/mp4">' +
+      '<meta property="og:video:width" content="400">' +
+      '<meta property="og:video:height" content="700">'
+    : "";
   var deeplink = "https://ktalk.hk/#v=" + encodeURIComponent(t);
   var btn =
     '<a href="' + deeplink + '" style="display:block;text-align:center;background:#07c160;color:#fff;' +
@@ -28,7 +39,8 @@ module.exports = (req, res) => {
     '<!DOCTYPE html><html lang="zh-Hant"><head><meta charset="utf-8">' +
     '<meta name="viewport" content="width=device-width,initial-scale=1">' +
     "<title>" + esc(t) + " · 講圈</title>" +
-    '<meta property="og:type" content="website">' +
+    '<meta property="og:type" content="' + ogtype + '">' +
+    ogvideo +
     '<meta property="og:site_name" content="講圈 KongTalk">' +
     '<meta property="og:title" content="' + esc(t) + '">' +
     '<meta property="og:description" content="' + esc(desc) + '">' +

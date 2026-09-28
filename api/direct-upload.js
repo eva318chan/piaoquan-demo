@@ -54,10 +54,20 @@ module.exports = async (req, res) => {
         res.status(502).json({ ok: false, error: "Stream lookup failed" });
         return;
       }
+      const ready = !!data.result.readyToStream;
+      // 影片 ready 後自動開 MP4 下載（idempotent），令 Facebook 分享可以內嵌播放條片
+      if (ready) {
+        try {
+          await fetch(base + "/" + encodeURIComponent(uid) + "/downloads", {
+            method: "POST",
+            headers: { Authorization: "Bearer " + token }
+          });
+        } catch (e) { /* 開唔到都唔阻住 status 回傳 */ }
+      }
       res.status(200).json({
         ok: true,
         uid: data.result.uid,
-        ready: !!data.result.readyToStream,
+        ready: ready,
         duration: data.result.duration
       });
       return;
