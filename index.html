@@ -179,6 +179,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
   </div>
   <div class="pubbox" id="pubbox">
     <video id="preview" controls playsinline></video>
+    <div id="upprog" style="display:none;margin:10px 0;text-align:left">
+      <div id="upstat" style="font-size:13px;color:#666;margin-bottom:6px">準備上傳…</div>
+      <div style="height:8px;background:#eee;border-radius:4px;overflow:hidden"><div id="upbar" style="height:100%;width:0;background:#07c160;border-radius:4px;transition:width .2s"></div></div>
+    </div>
     <input id="vtitle" placeholder="幫條片改個標題（例如：今日9月28號，祝大家身體健康！）" maxlength="60">
     <button class="pubbtn" onclick="publishVideo()">出片！</button>
   </div>
@@ -349,11 +353,16 @@ var CREATORS=[
 ];
 var plays=134, shares=46;
 
+function streamThumb(uid){return "https://videodelivery.net/"+uid+"/thumbnails/thumbnail.jpg";}
+function mediaHTML(v){
+ if(v.stream&&v.uid) return '<img class="sthumb" src="'+streamThumb(v.uid)+'" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display=\'none\'">';
+ return '<video src="'+v.src+'" preload="metadata" playsinline loop></video>';
+}
 function renderFeed(){
  var h="";
  VIDEOS.forEach(function(v,i){
-  h+='<div class="vcard"><div class="vwrap" onclick="togglePlay(this)">'
-   +'<video src="'+v.src+'" preload="metadata" playsinline loop></video>'
+  h+='<div class="vcard"><div class="vwrap" data-i="'+i+'" onclick="togglePlay(this)">'
+   +mediaHTML(v)
    +'<div class="vtitle">'+v.t+'</div>'
    +'<div class="vmeta"><span>'+v.p+'</span><span>'+v.d+'</span></div>'
    +'<div class="bigplay"></div></div>'
@@ -363,10 +372,33 @@ function renderFeed(){
  });
  document.getElementById("feed").innerHTML=h;
 }
+function stopMedia(w){
+ var f=w.querySelector("iframe");if(f)f.remove();
+ var vd=w.querySelector("video");if(vd)vd.pause();
+}
+function restoreMedia(w,v){
+ var old=w.querySelector("iframe,video,img.sthumb");if(old)old.remove();
+ var d=document.createElement("div");d.innerHTML=mediaHTML(v);
+ w.insertBefore(d.firstChild,w.firstChild);
+}
 function togglePlay(w){
- var v=w.querySelector("video");
- document.querySelectorAll(".vwrap.playing video").forEach(function(o){if(o!==v){o.pause();o.closest(".vwrap").classList.remove("playing");}});
- if(v.paused){v.play();w.classList.add("playing");}else{v.pause();w.classList.remove("playing");}
+ var i=+w.getAttribute("data-i"),v=VIDEOS[i];
+ document.querySelectorAll(".vwrap.playing").forEach(function(o){
+  if(o!==w){o.classList.remove("playing");stopMedia(o);restoreMedia(o,VIDEOS[+o.getAttribute("data-i")]);}
+ });
+ if(w.classList.contains("playing")){w.classList.remove("playing");stopMedia(w);restoreMedia(w,v);return;}
+ w.classList.add("playing");
+ if(v&&v.stream&&v.uid){
+  /* Cloudflare Stream 播放器 */
+  var im=document.createElement("iframe");
+  im.src="https://iframe.videodelivery.net/"+v.uid+"?autoplay=true";
+  im.style.cssText="position:absolute;inset:0;width:100%;height:100%;border:0";
+  im.setAttribute("allow","accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture");
+  im.setAttribute("allowfullscreen","true");
+  w.insertBefore(im,w.firstChild);
+ }else{
+  var vd=w.querySelector("video");if(vd)vd.play();
+ }
 }
 function renderFollow(){
  var h="";
@@ -388,7 +420,8 @@ function renderArts(){
 function renderWorks(){
  var h="";
  VIDEOS.filter(function(v){return v.mine;}).forEach(function(v){
-  h+='<div class="work"><div class="thumb"><img src="https://picsum.photos/seed/'+encodeURIComponent(v.av+v.t.length)+'/400/250"><span class="dur">'+v.d+'</span></div><div class="wt">'+v.t+'</div></div>';
+  var thumb=(v.stream&&v.uid)?streamThumb(v.uid):("https://picsum.photos/seed/"+encodeURIComponent(v.av+v.t.length)+"/400/250");
+  h+='<div class="work"><div class="thumb"><img src="'+thumb+'"><span class="dur">'+v.d+'</span></div><div class="wt">'+v.t+'</div></div>';
  });
  document.getElementById("works").innerHTML=h;
  document.getElementById("wcount").textContent=VIDEOS.filter(function(v){return v.mine;}).length;
@@ -452,25 +485,73 @@ function toast(msg){
  t.textContent=msg;t.classList.add("show");
  clearTimeout(t._h);t._h=setTimeout(function(){t.classList.remove("show");},2200);
 }
-/* 上传 */
+/* 上传：Cloudflare Stream 直傳（direct upload）+ 本地 fallback */
+var _pendingFile=null,_streamUid=null;
 function pickFile(){document.getElementById("fileInput").click();}
 function onFile(inp){
  if(!inp.files||!inp.files[0])return;
- var url=URL.createObjectURL(inp.files[0]);
+ _pendingFile=inp.files[0];_streamUid=null;
+ var url=URL.createObjectURL(_pendingFile);
  document.getElementById("preview").src=url;
  document.getElementById("pubbox").style.display="block";
  document.getElementById("pubbox").scrollIntoView();
+ startStreamUpload(_pendingFile);
+}
+function streamFail(msg){
+ var prog=document.getElementById("upprog"),bar=document.getElementById("upbar"),stat=document.getElementById("upstat");
+ prog.style.display="block";bar.style.width="0";
+ stat.textContent="雲端上傳唔到（"+msg+"），會用返本地預覽出片";
+}
+function startStreamUpload(file){
+ var prog=document.getElementById("upprog"),bar=document.getElementById("upbar"),stat=document.getElementById("upstat");
+ prog.style.display="none";bar.style.width="0";
+ /* 本地 file:// 預覽或冇 API 嘅環境：跳過，直接用本地模式 */
+ if(location.protocol.indexOf("http")!==0){return;}
+ prog.style.display="block";stat.textContent="準備緊雲端上傳…";
+ fetch("/api/direct-upload",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({title:file.name||"講圈短片"})})
+ .then(function(r){return r.json();})
+ .then(function(j){
+  if(!j||!j.ok||!j.uploadURL){streamFail((j&&j.error)||"未知錯誤");return;}
+  var xhr=new XMLHttpRequest();
+  xhr.open("POST",j.uploadURL);
+  xhr.upload.onprogress=function(e){
+   if(e.lengthComputable){var p=Math.round(e.loaded/e.total*100);bar.style.width=p+"%";stat.textContent="上傳緊去雲端…"+p+"%";}
+  };
+  xhr.onload=function(){
+   if(xhr.status>=200&&xhr.status<300){
+    _streamUid=j.uid;bar.style.width="100%";
+    stat.textContent="上傳完成！雲端轉碼緊，出片後首頁會用雲端播放";
+    try{
+     var saved=JSON.parse(localStorage.getItem("kongtalk_my_streams")||"[]");
+     saved.unshift({uid:j.uid,t:document.getElementById("vtitle").value.trim()||"我嘅新短片"});
+     localStorage.setItem("kongtalk_my_streams",JSON.stringify(saved.slice(0,50)));
+    }catch(e){}
+   }else streamFail("HTTP "+xhr.status);
+  };
+  xhr.onerror=function(){streamFail("連線中斷");};
+  var fd=new FormData();fd.append("file",file);
+  xhr.send(fd);
+ })
+ .catch(function(){streamFail("網絡問題");});
 }
 function publishVideo(){
  var t=document.getElementById("vtitle").value.trim()||"我嘅新短片";
- var src=document.getElementById("preview").src;
- VIDEOS.unshift({t:t,p:"0次播放",d:"--:--",a:"香港 - 孔令江 Eddie",av:"孔",src:src,mine:true});
+ var v;
+ if(_streamUid){
+  v={t:t,p:"0次播放",d:"--:--",a:"香港 - 孔令江 Eddie",av:"孔",uid:_streamUid,mine:true,stream:true};
+ }else{
+  /* fallback：冇雲端 uid 就用返原本本地 blob 預覽 */
+  var src=document.getElementById("preview").src;
+  v={t:t,p:"0次播放",d:"--:--",a:"香港 - 孔令江 Eddie",av:"孔",src:src,mine:true};
+ }
+ VIDEOS.unshift(v);
  plays+=1;
  document.getElementById("st-plays").textContent=plays;
  document.getElementById("s-plays").textContent=plays;
  renderFeed();renderWorks();
  document.getElementById("pubbox").style.display="none";
  document.getElementById("vtitle").value="";
+ _pendingFile=null;_streamUid=null;
  alert("出片成功！已經喺首頁同你嘅作品出現。");
  go("s-home",document.querySelectorAll(".tab")[0]);
 }
@@ -495,6 +576,13 @@ function chart(id,data,color){
  });
  svg.innerHTML=h;
 }
+/* 之前經 Stream 上傳嘅片（存喺 localStorage，demo 級持久化） */
+try{
+ var _saved=JSON.parse(localStorage.getItem("kongtalk_my_streams")||"[]");
+ _saved.forEach(function(s){
+  if(s&&s.uid) VIDEOS.unshift({t:s.t||"我嘅新短片",p:"0次播放",d:"--:--",a:"香港 - 孔令江 Eddie",av:"孔",uid:s.uid,mine:true,stream:true});
+ });
+}catch(e){}
 renderFeed();renderFollow();renderArts();renderWorks();
 chart("c1",[3,0,9,0,0,0,0],"#07c160");
 chart("c2",[0,0,1,0,0,0,0],"#f5a623");
