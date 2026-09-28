@@ -98,6 +98,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .prow .avatar{width:64px;height:64px;font-size:26px}
 .prow .nm{font-size:20px;font-weight:700}
 .plink{margin-left:auto;font-size:26px;color:#999}
+.picons{margin-left:auto;display:flex;gap:16px}
+.pic{display:flex;flex-direction:column;align-items:center;font-size:21px}
+.pic span{font-size:11px;color:#666;margin-top:3px}
 .pstats{display:flex;gap:18px;margin-top:14px;font-size:15px}
 .pstats b{font-size:20px}
 .pstats span{color:#666;font-size:13px}
@@ -114,7 +117,31 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .mi{display:flex;align-items:center;padding:15px 18px;font-size:16px;border-bottom:1px solid #f5f5f5}
 .mi .arr{margin-left:auto;color:#ccc}
 .mi .tick{margin-left:auto;width:46px;height:26px;border-radius:13px;background:#ddd;position:relative}
-.mi .tick::after{content:"";position:absolute;width:22px;height:22px;border-radius:50%;background:#fff;top:2px;left:2px;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.mi .tick::after{content:"";position:absolute;width:22px;height:22px;border-radius:50%;background:#fff;top:2px;left:2px;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .2s}
+.mi .tick.on{background:#07c160}
+.mi .tick.on::after{left:22px}
+/* ---------- 我：個人資料/幫助/收益/留言 ---------- */
+.pform{background:#fff;padding:6px 18px 4px}
+.pform .flab{font-size:14px;color:#888;margin:18px 0 8px}
+.pform input[type=text]{width:100%;border:1px solid #e5e5e5;border-radius:8px;padding:12px;font-size:16px;box-sizing:border-box;outline:none}
+.pform input[type=text]:focus{border-color:#07c160}
+.pform .cnt{text-align:right;font-size:12px;color:#bbb;margin-top:4px}
+.pills{display:flex;flex-wrap:wrap;gap:10px}
+.pill{border:1px solid #e5e5e5;background:#f7f7f7;border-radius:20px;padding:8px 18px;font-size:15px;color:#555}
+.pill.on{background:#07c160;border-color:#07c160;color:#fff}
+.savebtn{display:block;width:calc(100% - 36px);margin:26px 18px;background:#07c160;color:#fff;border:none;border-radius:28px;padding:15px;font-size:17px;font-weight:700}
+.eavatar{width:84px;height:84px;border-radius:50%;background:#07c160;color:#fff;font-size:34px;display:flex;align-items:center;justify-content:center;margin:22px auto 6px}
+.faq{background:#fff}
+.faq .fq{border-bottom:1px solid #f5f5f5}
+.faq .fq .qq{padding:16px 18px;font-size:16px;display:flex;justify-content:space-between;align-items:center}
+.faq .fq .aa{display:none;padding:0 18px 16px;font-size:14px;color:#666;line-height:1.8}
+.faq .fq.open .aa{display:block}
+.faq .fq .qq .arw{color:#ccc;transition:transform .2s}
+.faq .fq.open .qq .arw{transform:rotate(90deg)}
+.empty{text-align:center;color:#bbb;padding:70px 30px;font-size:15px;line-height:2.2}
+.balcard{margin:16px;background:#fff;border-radius:12px;padding:26px 20px;text-align:center}
+.balcard .b{font-size:38px;font-weight:800;color:#07c160;margin:8px 0}
+.note{margin:0 16px;background:#fff;border-radius:12px;padding:16px;font-size:14px;color:#666;line-height:1.9}
 .piaohao{text-align:center;color:#bbb;font-size:13px;padding:18px}
 /* ---------- 统计数据 ---------- */
 .statgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:14px 12px}
@@ -223,7 +250,11 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
     <div class="prow">
       <div class="avatar">孔</div>
       <div class="nm">香港 - 孔令江 Eddie</div>
-      <div class="plink">›</div>
+      <div class="picons">
+        <div class="pic" onclick="go('s-stats')">📊<span>數據</span></div>
+        <div class="pic" onclick="scrollToMenu()">⚙️<span>設置</span></div>
+        <div class="pic" onclick="shareProfile()">🔗<span>分享</span></div>
+      </div>
     </div>
     <div class="pstats">
       <div><b id="st-plays">134</b><br><span>播放</span></div>
@@ -238,14 +269,14 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
   <div class="works" id="works"></div>
   <div class="menu">
     <div class="mi" onclick="go('s-stats')">📊 數據統計 <span class="arr">›</span></div>
-    <div class="mi">✏️ 改個人資料 <span class="arr">›</span></div>
-    <div class="mi">💰 收益 <span class="arr">›</span></div>
-    <div class="mi">💬 留言管理 <span class="arr">›</span></div>
-    <div class="mi">❓ 幫助與意見 <span class="arr">›</span></div>
+    <div class="mi" onclick="go('s-editprofile')">✏️ 改個人資料 <span class="arr">›</span></div>
+    <div class="mi" onclick="go('s-earnings')">💰 收益 <span class="arr">›</span></div>
+    <div class="mi" onclick="go('s-comments')">💬 留言管理 <span class="arr">›</span></div>
+    <div class="mi" onclick="go('s-help')">❓ 幫助與意見 <span class="arr">›</span></div>
     <div class="mi" onclick="go('s-disclaimer')">📜 免責聲明及版權條款 <span class="arr">›</span></div>
-    <div class="mi">🔗 攞個人主頁連結 <span class="arr">›</span></div>
-    <div class="mi">📤 分享嘅短片會帶埋我其他片 <span class="tick"></span></div>
-    <div class="mi">🔔 接收關注更新通知 <span class="tick"></span></div>
+    <div class="mi" onclick="copyProfileLink()">🔗 攞個人主頁連結 <span class="arr">›</span></div>
+    <div class="mi" onclick="toggleSetting('shareOthers')">📤 分享嘅短片會帶埋我其他片 <span class="tick" id="tick-share"></span></div>
+    <div class="mi" onclick="toggleSetting('notifyFollow')">🔔 接收關注更新通知 <span class="tick" id="tick-notify"></span></div>
   </div>
   <div class="piaohao">講圈號：84a113104747（演示）</div>
 </div>
@@ -292,6 +323,98 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
     <p class="body">3. 如發現平台上有侵犯你版權嘅內容，請聯絡我哋並提供證明，我哋會盡快移除。</p>
     <p class="body">4. 違規內容一經發現會被移除，嚴重者會被停用帳號。</p>
     <p class="body" style="color:#999;font-size:14px;margin-top:20px">最後更新：2026年9月28日</p>
+  </div>
+  <div style="height:20px"></div>
+</div>
+
+<!-- ============ 改個人資料 ============ -->
+<div class="screen" id="s-editprofile">
+  <div style="position:relative;background:#fff">
+    <button class="backbtn" onclick="go('s-profile')">‹</button>
+    <div class="topbar" style="border:none">改個人資料</div>
+  </div>
+  <div class="eavatar" id="ep-avatar">孔</div>
+  <div class="pform">
+    <div class="flab">暱稱</div>
+    <input type="text" id="ep-name" maxlength="20" placeholder="改個名">
+    <div class="cnt"><span id="ep-name-n">0</span>/20</div>
+    <div class="flab">簽名</div>
+    <input type="text" id="ep-bio" maxlength="50" placeholder="介紹下自己">
+    <div class="cnt"><span id="ep-bio-n">0</span>/50</div>
+    <div class="flab">性別</div>
+    <div class="pills" id="ep-gender">
+      <div class="pill" data-v="男">♂ 男</div>
+      <div class="pill" data-v="女">♀ 女</div>
+    </div>
+    <div class="flab">年齡</div>
+    <div class="pills" id="ep-age">
+      <div class="pill" data-v="17歲以下">17歲以下</div>
+      <div class="pill" data-v="18-24歲">18-24歲</div>
+      <div class="pill" data-v="25-29歲">25-29歲</div>
+      <div class="pill" data-v="30-39歲">30-39歲</div>
+      <div class="pill" data-v="40-49歲">40-49歲</div>
+      <div class="pill" data-v="50歲以上">50歲以上</div>
+    </div>
+    <div class="flab">鍾意嘅內容（可多選）</div>
+    <div class="pills" id="ep-tags">
+      <div class="pill" data-v="搞笑">搞笑</div>
+      <div class="pill" data-v="音樂">音樂</div>
+      <div class="pill" data-v="綜藝">綜藝</div>
+      <div class="pill" data-v="舞蹈">舞蹈</div>
+      <div class="pill" data-v="旅行">旅行</div>
+      <div class="pill" data-v="百態">百態</div>
+      <div class="pill" data-v="健康">健康</div>
+      <div class="pill" data-v="妙招">妙招</div>
+      <div class="pill" data-v="影視">影視</div>
+      <div class="pill" data-v="科技">科技</div>
+      <div class="pill" data-v="美食">美食</div>
+      <div class="pill" data-v="時尚">時尚</div>
+      <div class="pill" data-v="運動">運動</div>
+      <div class="pill" data-v="遊戲">遊戲</div>
+    </div>
+  </div>
+  <button class="savebtn" onclick="saveProfile()">保存</button>
+  <div style="height:20px"></div>
+</div>
+
+<!-- ============ 收益 ============ -->
+<div class="screen" id="s-earnings">
+  <div style="position:relative;background:#fff">
+    <button class="backbtn" onclick="go('s-profile')">‹</button>
+    <div class="topbar" style="border:none">收益</div>
+  </div>
+  <div class="balcard">
+    <div style="font-size:14px;color:#888">可提現餘額（演示）</div>
+    <div class="b">HK$ 0.00</div>
+    <div style="font-size:13px;color:#bbb">累計收益 HK$ 0.00</div>
+  </div>
+  <div class="note">💡 演示版暫未開通收益功能（打賞、廣告分成分）。<br>正式版開通後，呢度會顯示你嘅打賞收入同分成分明細，敬請期待。</div>
+  <div style="height:20px"></div>
+</div>
+
+<!-- ============ 留言管理 ============ -->
+<div class="screen" id="s-comments">
+  <div style="position:relative;background:#fff">
+    <button class="backbtn" onclick="go('s-profile')">‹</button>
+    <div class="topbar" style="border:none">留言管理</div>
+  </div>
+  <div class="empty">💬<br>暫時未收到留言<br><span style="font-size:13px">出多啲片，自然有人留言啦</span></div>
+  <div style="height:20px"></div>
+</div>
+
+<!-- ============ 幫助與意見 ============ -->
+<div class="screen" id="s-help">
+  <div style="position:relative;background:#fff">
+    <button class="backbtn" onclick="go('s-profile')">‹</button>
+    <div class="topbar" style="border:none">幫助與意見</div>
+  </div>
+  <div class="faq">
+    <div class="fq"><div class="qq" onclick="faqToggle(this)">如何上傳短片？<span class="arw">›</span></div><div class="aa">撳底部「拍片」→ 揀「上傳短片」或「即拍即傳」→ 揀好影片等上傳去雲端 → 寫標題撳「發布」。上傳後雲端會自動轉碼，等一陣就睇得。</div></div>
+    <div class="fq"><div class="qq" onclick="faqToggle(this)">上傳支援咩格式？<span class="arw">›</span></div><div class="aa">建議用 mp4、mov 格式；片長 1 分鐘內、1080p 或以下，上傳同轉碼最快。</div></div>
+    <div class="fq"><div class="qq" onclick="faqToggle(this)">點解上傳唔到？<span class="arw">›</span></div><div class="aa">先檢查網絡連線；iPhone 建議用 Safari、Android 用 Chrome；喺微信入面直接開啟可能會受限制，建議用瀏覽器開 ktalk.hk 再試。</div></div>
+    <div class="fq"><div class="qq" onclick="faqToggle(this)">點樣分享短片？<span class="arw">›</span></div><div class="aa">每條短片撳「分享」，可以經 WhatsApp、微信（掃 QR code）、Facebook 分享，或者複製連結貼去任何地方。</div></div>
+    <div class="fq"><div class="qq" onclick="faqToggle(this)">收益功能幾時有？<span class="arw">›</span></div><div class="aa">演示版暫未開通收益功能，正式版會有打賞同廣告分成分，到時會再公佈。</div></div>
+    <div class="fq"><div class="qq" onclick="faqToggle(this)">點樣改個人資料？<span class="arw">›</span></div><div class="aa">「我」→「改個人資料」，暱稱、簽名、性別、年齡、興趣都可以改，保存後即時更新。</div></div>
   </div>
   <div style="height:20px"></div>
 </div>
@@ -446,7 +569,7 @@ function openShare(title){
  document.getElementById("sheet").classList.add("show");
  shares++;document.getElementById("s-shares").textContent=shares;
 }
-function shareText(){return "講圈 — 香港人講嘢嘅短片平台：「"+_shareTitle+"」 ";}
+function shareText(){var s="講圈 — 香港人講嘢嘅短片平台：「"+_shareTitle+"」 ";if(typeof _settings!=="undefined"&&_settings.shareOthers)s+="\n睇埋我其他片："+profileURL();return s;}
 function shareTo(which){
  var url=document.getElementById("sharelink").value;
  if(which==="wa") window.open("https://wa.me/?text="+encodeURIComponent(shareText()+url),"_blank");
@@ -555,6 +678,81 @@ function publishVideo(){
  alert("出片成功！已經喺首頁同你嘅作品出現。");
  go("s-home",document.querySelectorAll(".tab")[0]);
 }
+/* ---------- 我：個人資料 / 設定 ---------- */
+var _profile={name:"香港 - 孔令江 Eddie",bio:"",gender:"",age:"",tags:[]};
+try{var _p=JSON.parse(localStorage.getItem("kongtalk_profile")||"null");if(_p)_profile=_p;}catch(e){}
+var _settings={shareOthers:true,notifyFollow:true};
+try{var _s=JSON.parse(localStorage.getItem("kongtalk_settings")||"null");if(_s)_settings=Object.assign(_settings,_s);}catch(e){}
+function applyProfile(){
+ var nm=document.querySelector("#s-profile .nm");if(nm)nm.textContent=_profile.name||"香港 - 孔令江 Eddie";
+ var ch=((_profile.name||"孔").trim().charAt(0))||"孔";
+ var av=document.querySelector("#s-profile .avatar");if(av)av.textContent=ch;
+ var ea=document.getElementById("ep-avatar");if(ea)ea.textContent=ch;
+}
+function markPills(id,vals){
+ document.querySelectorAll("#"+id+" .pill").forEach(function(p){
+  p.classList.toggle("on",vals.indexOf(p.getAttribute("data-v"))>=0);
+ });
+}
+function updCount(){
+ document.getElementById("ep-name-n").textContent=document.getElementById("ep-name").value.length;
+ document.getElementById("ep-bio-n").textContent=document.getElementById("ep-bio").value.length;
+}
+function fillEditForm(){
+ document.getElementById("ep-name").value=_profile.name||"";
+ document.getElementById("ep-bio").value=_profile.bio||"";
+ updCount();
+ markPills("ep-gender",_profile.gender?[_profile.gender]:[]);
+ markPills("ep-age",_profile.age?[_profile.age]:[]);
+ markPills("ep-tags",_profile.tags||[]);
+}
+function saveProfile(){
+ _profile.name=document.getElementById("ep-name").value.trim()||"香港 - 孔令江 Eddie";
+ _profile.bio=document.getElementById("ep-bio").value.trim();
+ var g=document.querySelector("#ep-gender .pill.on");_profile.gender=g?g.getAttribute("data-v"):"";
+ var a=document.querySelector("#ep-age .pill.on");_profile.age=a?a.getAttribute("data-v"):"";
+ _profile.tags=[];document.querySelectorAll("#ep-tags .pill.on").forEach(function(p){_profile.tags.push(p.getAttribute("data-v"));});
+ try{localStorage.setItem("kongtalk_profile",JSON.stringify(_profile));}catch(e){}
+ applyProfile();toast("個人資料已保存");go("s-profile");
+}
+function toggleSetting(key){
+ _settings[key]=!_settings[key];
+ try{localStorage.setItem("kongtalk_settings",JSON.stringify(_settings));}catch(e){}
+ applySettings();
+ toast(_settings[key]?"已開啟":"已關閉");
+}
+function applySettings(){
+ var ts=document.getElementById("tick-share"),tn=document.getElementById("tick-notify");
+ if(ts)ts.classList.toggle("on",!!_settings.shareOthers);
+ if(tn)tn.classList.toggle("on",!!_settings.notifyFollow);
+}
+function profileURL(){return location.origin+location.pathname+"#u=84a113104747";}
+function copyProfileLink(){
+ var url=profileURL();
+ var done=function(){toast("個人主頁連結已複製");};
+ var fb=function(){var i=document.createElement("textarea");i.value=url;document.body.appendChild(i);i.select();try{document.execCommand("copy");}catch(e){}document.body.removeChild(i);};
+ if(navigator.clipboard&&navigator.clipboard.writeText){navigator.clipboard.writeText(url).then(done,function(){fb();done();});}
+ else{fb();done();}
+}
+function faqToggle(el){el.parentNode.classList.toggle("open");}
+function scrollToMenu(){var m=document.querySelector("#s-profile .menu");if(m)m.scrollIntoView({behavior:"smooth"});}
+function shareProfile(){
+ _shareTitle=(_profile&&_profile.name?_profile.name:"我")+" 嘅講圈主頁";
+ document.getElementById("sharelink").value=profileURL();
+ document.getElementById("mask").classList.add("show");
+ document.getElementById("sheet").classList.add("show");
+}
+function initEditForm(){
+ fillEditForm();
+ document.getElementById("ep-name").oninput=updCount;
+ document.getElementById("ep-bio").oninput=updCount;
+ document.querySelectorAll("#ep-gender .pill, #ep-age .pill").forEach(function(p){
+  p.onclick=function(){markPills(p.parentNode.id,[p.getAttribute("data-v")]);};
+ });
+ document.querySelectorAll("#ep-tags .pill").forEach(function(p){
+  p.onclick=function(){p.classList.toggle("on");};
+ });
+}
 /* 文章点赞 */
 var liked=false;
 function likeArt(){liked=!liked;document.getElementById("artlike").classList.toggle("liked",liked);document.getElementById("artliken").textContent=liked?6183:6182;}
@@ -584,6 +782,7 @@ try{
  });
 }catch(e){}
 renderFeed();renderFollow();renderArts();renderWorks();
+applyProfile();applySettings();initEditForm();
 chart("c1",[3,0,9,0,0,0,0],"#07c160");
 chart("c2",[0,0,1,0,0,0,0],"#f5a623");
 chart("c3",[0,0,1,0,0,0,0],"#4a90ff");
