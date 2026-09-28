@@ -1,0 +1,409 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<title>票圈视频 · 演示版</title>
+<style>
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent}
+body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei",sans-serif;background:#e8e8e8;color:#222;font-size:16px}
+#app{max-width:480px;margin:0 auto;background:#f5f5f5;min-height:100vh;position:relative;padding-bottom:70px}
+.topbar{position:sticky;top:0;z-index:50;background:#fff;border-bottom:1px solid #eee;padding:12px 16px;font-size:19px;font-weight:700;text-align:center}
+.topbar .demo{display:inline-block;font-size:11px;font-weight:400;background:#ff9500;color:#fff;border-radius:8px;padding:2px 8px;margin-left:8px;vertical-align:middle}
+.screen{display:none}
+.screen.active{display:block}
+/* ---------- 首页视频卡片 ---------- */
+.vcard{background:#fff;margin:10px 12px;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.vwrap{position:relative;background:#000;aspect-ratio:16/9}
+.vwrap video{width:100%;height:100%;object-fit:cover;display:block}
+.vtitle{position:absolute;top:0;left:0;right:0;padding:14px 14px 30px;font-size:24px;font-weight:800;color:#fff;line-height:1.35;text-shadow:0 2px 8px rgba(0,0,0,.75);pointer-events:none}
+.vmeta{position:absolute;bottom:8px;left:12px;right:12px;display:flex;justify-content:space-between;color:#fff;font-size:13px;text-shadow:0 1px 4px rgba(0,0,0,.8);pointer-events:none}
+.bigplay{position:absolute;top:50%;left:50%;transform:translate(-50%,-50%);width:64px;height:64px;border-radius:50%;background:rgba(0,0,0,.45);display:flex;align-items:center;justify-content:center;pointer-events:none}
+.bigplay::after{content:"";border-left:22px solid #fff;border-top:14px solid transparent;border-bottom:14px solid transparent;margin-left:6px}
+.vwrap.playing .bigplay{display:none}
+.vfoot{display:flex;align-items:center;justify-content:space-between;padding:10px 12px}
+.author{display:flex;align-items:center;gap:8px;font-size:15px;color:#333}
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#07c160,#0a8);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0}
+.sharebtn{background:#07c160;color:#fff;border:none;border-radius:20px;padding:8px 22px;font-size:15px;font-weight:600}
+.sharebtn:active{opacity:.8}
+/* ---------- 底部导航 ---------- */
+.tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;border-top:1px solid #e5e5e5;display:flex;z-index:60}
+.tab{flex:1;text-align:center;padding:8px 0 10px;font-size:12px;color:#888}
+.tab .ic{font-size:24px;display:block;line-height:1.2}
+.tab.on{color:#111;font-weight:600}
+.tab.center .ic{width:52px;height:52px;margin:-18px auto 2px;background:#07c160;border-radius:50%;color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;box-shadow:0 2px 8px rgba(7,193,96,.4)}
+/* ---------- 关注 ---------- */
+.creator{background:#fff;margin:10px 12px;border-radius:12px;padding:14px;display:flex;align-items:center;gap:12px}
+.creator .avatar{width:52px;height:52px;font-size:22px}
+.creator .info{flex:1}
+.creator .info .nm{font-size:17px;font-weight:700}
+.creator .info .st{font-size:13px;color:#999;margin-top:4px}
+.fbtn{border:1px solid #07c160;color:#07c160;background:#fff;border-radius:16px;padding:7px 18px;font-size:14px}
+.fbtn.followed{background:#f0f0f0;border-color:#ddd;color:#999}
+/* ---------- 发视频 ---------- */
+.upwrap{padding:26px 20px;text-align:center}
+.upcards{display:flex;gap:14px;margin-bottom:18px}
+.upcard{flex:1;border-radius:14px;padding:34px 10px;color:#fff;font-size:19px;font-weight:700;box-shadow:0 4px 12px rgba(0,0,0,.15)}
+.upcard small{display:block;font-size:13px;font-weight:400;margin-top:6px;opacity:.9}
+.upcard.blue{background:linear-gradient(135deg,#4a90ff,#2b6fe0)}
+.upcard.green{background:linear-gradient(135deg,#3ddc74,#07c160)}
+.recbtn{background:#fff;border:none;border-radius:14px;width:100%;padding:20px;font-size:19px;font-weight:600;box-shadow:0 2px 8px rgba(0,0,0,.08);margin-bottom:22px}
+.agree{font-size:13px;color:#999;display:flex;align-items:center;justify-content:center;gap:6px}
+.agree .ck{width:18px;height:18px;border-radius:50%;background:#07c160;color:#fff;display:inline-flex;align-items:center;justify-content:center;font-size:12px}
+#fileInput{display:none}
+.pubbox{background:#fff;margin:0 12px 12px;border-radius:12px;padding:14px;display:none}
+.pubbox video{width:100%;border-radius:8px;background:#000;max-height:220px}
+.pubbox input{width:100%;border:1px solid #ddd;border-radius:8px;padding:10px;margin:10px 0;font-size:15px}
+.pubbtn{background:#07c160;color:#fff;border:none;border-radius:8px;width:100%;padding:12px;font-size:17px;font-weight:700}
+/* ---------- 美文 ---------- */
+.acard{background:#fff;margin:12px;border-radius:12px;overflow:hidden;box-shadow:0 1px 4px rgba(0,0,0,.08)}
+.acard img{width:100%;height:190px;object-fit:cover;display:block}
+.acard .abody{padding:14px}
+.acard .at{font-size:18px;font-weight:700;line-height:1.4}
+.acard .as{font-size:14px;color:#999;margin-top:6px;line-height:1.5}
+.acard .afoot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0;font-size:13px;color:#aaa}
+.acard .more{color:#e64340;font-size:15px;font-weight:600}
+/* ---------- 文章详情 ---------- */
+.backbtn{position:absolute;left:12px;top:12px;font-size:20px;color:#333;background:none;border:none}
+.art{padding:18px;background:#fff}
+.art h1{font-size:23px;line-height:1.45;margin:6px 0 12px}
+.art .meta{color:#576b95;font-size:14px}
+.art .meta .dt{color:#999;margin-left:10px}
+.aibox{background:#f7f8fa;border-radius:10px;padding:12px;margin:14px 0;font-size:14px;color:#555;display:flex;gap:8px;align-items:center}
+.followtip{text-align:center;font-size:19px;font-weight:800;margin:18px 0;line-height:1.6}
+.followtip .blue{color:#576b95}
+.art p.body{font-size:17px;line-height:1.9;margin:10px 0;color:#333}
+.art img.body{width:100%;border-radius:8px;margin:8px 0}
+.likebar{display:flex;justify-content:space-between;align-items:center;padding:14px 18px;background:#fff;border-top:1px solid #f0f0f0;position:sticky;bottom:56px}
+.likebar .src{font-size:15px;font-weight:600;display:flex;align-items:center;gap:8px}
+.likebar .src .badge{width:30px;height:30px;border-radius:50%;background:#e64340;color:#fff;font-size:13px;display:flex;align-items:center;justify-content:center;font-weight:800}
+.likebtn{background:none;border:none;font-size:15px;color:#666;display:flex;flex-direction:column;align-items:center;gap:2px}
+.likebtn .n{font-size:13px}
+.likebtn.liked{color:#e64340}
+/* ---------- 我的 ---------- */
+.phead{background:#fff;padding:22px 18px 14px}
+.prow{display:flex;align-items:center;gap:12px}
+.prow .avatar{width:64px;height:64px;font-size:26px}
+.prow .nm{font-size:20px;font-weight:700}
+.plink{margin-left:auto;font-size:26px;color:#999}
+.pstats{display:flex;gap:18px;margin-top:14px;font-size:15px}
+.pstats b{font-size:20px}
+.pstats span{color:#666;font-size:13px}
+.ptabs{display:flex;background:#fff;margin-top:10px;border-bottom:1px solid #eee}
+.ptab{flex:1;text-align:center;padding:12px;font-size:16px;color:#666}
+.ptab.on{color:#111;font-weight:700;border-bottom:3px solid #07c160}
+.works{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:12px}
+.work{background:#fff;border-radius:10px;overflow:hidden;position:relative}
+.work .thumb{aspect-ratio:16/10;background:#000;position:relative}
+.work .thumb img{width:100%;height:100%;object-fit:cover}
+.work .thumb .dur{position:absolute;right:6px;bottom:6px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;padding:2px 6px;border-radius:4px}
+.work .wt{font-size:13px;padding:8px;line-height:1.4;height:52px;overflow:hidden}
+.menu{background:#fff;margin-top:10px}
+.mi{display:flex;align-items:center;padding:15px 18px;font-size:16px;border-bottom:1px solid #f5f5f5}
+.mi .arr{margin-left:auto;color:#ccc}
+.mi .tick{margin-left:auto;width:46px;height:26px;border-radius:13px;background:#ddd;position:relative}
+.mi .tick::after{content:"";position:absolute;width:22px;height:22px;border-radius:50%;background:#fff;top:2px;left:2px;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.piaohao{text-align:center;color:#bbb;font-size:13px;padding:18px}
+/* ---------- 统计数据 ---------- */
+.statgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:14px 12px}
+.scard{background:#fff;border-radius:10px;padding:14px 10px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
+.scard .lb{font-size:13px;color:#666}
+.scard .vl{font-size:30px;font-weight:800;margin:6px 0}
+.scard .yd{font-size:12px;color:#999}
+.sect{background:#fff;margin-top:4px;padding:14px}
+.sect h3{font-size:15px;margin-bottom:4px}
+.sect h3::before{content:"";display:inline-block;width:4px;height:14px;background:#07c160;margin-right:8px;vertical-align:-2px}
+.chart{width:100%;height:150px}
+.chart .lbl{font-size:10px;fill:#999}
+/* ---------- 分享弹窗 ---------- */
+.sheet{position:fixed;left:50%;transform:translateX(-50%);bottom:0;width:100%;max-width:480px;background:#fff;border-radius:16px 16px 0 0;z-index:100;padding:20px;display:none;box-shadow:0 -2px 20px rgba(0,0,0,.15)}
+.sheet.show{display:block}
+.sheet h3{text-align:center;font-size:17px;margin-bottom:16px}
+.sheet .opts{display:flex;justify-content:space-around;margin-bottom:16px}
+.sheet .opt{text-align:center;font-size:13px;color:#333}
+.sheet .opt .oic{width:56px;height:56px;border-radius:50%;background:#07c160;color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;margin:0 auto 6px}
+.sheet .opt .oic.gray{background:#888}
+.mask{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:90;display:none}
+.mask.show{display:block}
+.linkrow{display:flex;gap:8px;margin-bottom:12px}
+.linkrow input{flex:1;border:1px solid #ddd;border-radius:8px;padding:10px;font-size:13px;color:#666}
+.linkrow button{background:#07c160;color:#fff;border:none;border-radius:8px;padding:0 18px;font-size:14px}
+.cancelbtn{width:100%;border:none;background:#f5f5f5;border-radius:10px;padding:13px;font-size:16px;margin-top:4px}
+.note{font-size:12px;color:#999;text-align:center;margin-top:10px;line-height:1.6}
+</style>
+</head>
+<body>
+<div id="app">
+<div class="topbar">票圈视频<span class="demo">DEMO 演示版</span></div>
+
+<!-- ============ 首页 ============ -->
+<div class="screen active" id="s-home">
+  <div id="feed"></div>
+</div>
+
+<!-- ============ 关注 ============ -->
+<div class="screen" id="s-follow">
+  <div id="followlist"></div>
+</div>
+
+<!-- ============ 发视频 ============ -->
+<div class="screen" id="s-upload">
+  <div class="upwrap">
+    <div class="upcards">
+      <div class="upcard blue" onclick="pickFile('hd')">上传高清视频<small>超大超长视频</small></div>
+      <div class="upcard green" onclick="pickFile('short')">上传短视频<small>最大500MB视频</small></div>
+    </div>
+    <button class="recbtn" onclick="pickFile('rec')">录制上传</button>
+    <div class="agree"><span class="ck">✓</span> 我已阅读并同意《软件许可及服务协议》及《隐私政策》</div>
+  </div>
+  <div class="pubbox" id="pubbox">
+    <video id="preview" controls playsinline></video>
+    <input id="vtitle" placeholder="给视频起个标题（比如：今天是9月28日，祝大家平安健康！）" maxlength="60">
+    <button class="pubbtn" onclick="publishVideo()">发布视频</button>
+  </div>
+  <input type="file" id="fileInput" accept="video/*" onchange="onFile(this)">
+</div>
+
+<!-- ============ 美文 ============ -->
+<div class="screen" id="s-articles">
+  <div id="artlist"></div>
+</div>
+
+<!-- ============ 文章详情 ============ -->
+<div class="screen" id="s-artdetail">
+  <div style="position:relative;background:#fff">
+    <button class="backbtn" onclick="go('s-articles')">‹</button>
+    <div class="topbar" style="border:none">票圈视频+</div>
+  </div>
+  <div class="art">
+    <h1>中国最长最险峻的峡谷，犹如世外桃源</h1>
+    <div class="meta">票圈原创视频精选 <span class="dt">2022年3月18日 09:00</span></div>
+    <div class="aibox">🎧 6067人 · AI摘要</div>
+    <div class="followtip">🔴⬆️ 点箭头指向的<span class="blue">蓝色小字</span>关注我</div>
+    <p class="body">北宋王希孟创作《千里江山图》，其中青绿的锦绣山河，位于中国大地西南端的怒江大峡谷。纵深2000米—3000米的大峡谷内，青绿颜色随着海拔的升高或浅或深，装点着大峡谷的壮美。</p>
+    <img class="body" src="https://picsum.photos/seed/canyon/800/450" alt="峡谷">
+    <p class="body">怒江大峡谷，最神秘、最原始古朴的大峡谷，丙察察必经之路。这里江水碧绿，两岸雪山耸立，犹如世外桃源。</p>
+    <img class="body" src="https://picsum.photos/seed/river/800/450" alt="江水">
+    <p class="body">每天清晨，云雾在峡谷中翻涌，阳光洒在江面上，波光粼粼，美不胜收。如果你还没去过，这里值得你列入人生必去清单。</p>
+  </div>
+  <div class="likebar">
+    <div class="src"><span class="badge">全文</span> 票圈原创视频精选 <span style="color:#1a9dff">✓</span></div>
+    <button class="likebtn" id="artlike" onclick="likeArt()">👍<span class="n" id="artliken">6182</span></button>
+  </div>
+</div>
+
+<!-- ============ 我的 ============ -->
+<div class="screen" id="s-profile">
+  <div class="phead">
+    <div class="prow">
+      <div class="avatar">孔</div>
+      <div class="nm">香港 - 孔令江 Eddie</div>
+      <div class="plink">›</div>
+    </div>
+    <div class="pstats">
+      <div><b id="st-plays">134</b><br><span>播放</span></div>
+      <div><b>3</b><br><span>粉丝</span></div>
+      <div><b>4</b><br><span>关注</span></div>
+    </div>
+  </div>
+  <div class="ptabs">
+    <div class="ptab on" onclick="ptab(this,'works')">作品 <span id="wcount">6</span></div>
+    <div class="ptab" onclick="ptab(this,'fav')">收藏</div>
+  </div>
+  <div class="works" id="works"></div>
+  <div class="menu">
+    <div class="mi" onclick="go('s-stats')">📊 统计数据 <span class="arr">›</span></div>
+    <div class="mi">✏️ 修改个人信息 <span class="arr">›</span></div>
+    <div class="mi">💰 我的收益 <span class="arr">›</span></div>
+    <div class="mi">💬 评论管理 <span class="arr">›</span></div>
+    <div class="mi">❓ 帮助与反馈 <span class="arr">›</span></div>
+    <div class="mi">🔗 获取个人页面路径 <span class="arr">›</span></div>
+    <div class="mi">📤 分享的视频带有我的其他视频 <span class="tick"></span></div>
+    <div class="mi">🔔 接收关注更新提醒 <span class="tick"></span></div>
+  </div>
+  <div class="piaohao">票圈号：84a113104747（演示）</div>
+</div>
+
+<!-- ============ 统计数据 ============ -->
+<div class="screen" id="s-stats">
+  <div style="position:relative;background:#fff">
+    <button class="backbtn" onclick="go('s-profile')">‹</button>
+    <div class="topbar" style="border:none">统计数据</div>
+  </div>
+  <div class="statgrid">
+    <div class="scard"><div class="lb">累计被播放数</div><div class="vl" id="s-plays">134</div><div class="yd">昨日新增 0</div></div>
+    <div class="scard"><div class="lb">粉丝数</div><div class="vl">3</div><div class="yd">昨日新增 0</div></div>
+    <div class="scard"><div class="lb">被收藏数</div><div class="vl">1</div><div class="yd">昨日新增 0</div></div>
+    <div class="scard"><div class="lb">被分享数</div><div class="vl" id="s-shares">46</div><div class="yd">昨日新增 0</div></div>
+  </div>
+  <div class="sect">
+    <h3>近7日数据趋势</h3>
+    <div style="font-size:14px;color:#07c160;font-weight:700;margin:12px 0 4px">视频播放数</div>
+    <svg class="chart" id="c1" viewBox="0 0 340 150"></svg>
+    <div style="font-size:14px;color:#f5a623;font-weight:700;margin:12px 0 4px">净增粉丝数</div>
+    <svg class="chart" id="c2" viewBox="0 0 340 150"></svg>
+    <div style="font-size:14px;color:#4a90ff;font-weight:700;margin:12px 0 4px">发视频数</div>
+    <svg class="chart" id="c3" viewBox="0 0 340 150"></svg>
+  </div>
+  <div style="height:20px"></div>
+</div>
+
+</div><!-- /app -->
+
+<!-- 底部导航 -->
+<div class="tabbar">
+  <div class="tab on" onclick="go('s-home',this)"><span class="ic">🏠</span>首页</div>
+  <div class="tab" onclick="go('s-follow',this)"><span class="ic">👁️</span>关注</div>
+  <div class="tab center" onclick="go('s-upload',this)"><span class="ic">🎬</span>发视频</div>
+  <div class="tab" onclick="go('s-articles',this)"><span class="ic">💬</span>美文</div>
+  <div class="tab" onclick="go('s-profile',this)"><span class="ic">👤</span>我的</div>
+</div>
+
+<!-- 分享弹窗 -->
+<div class="mask" id="mask" onclick="closeShare()"></div>
+<div class="sheet" id="sheet">
+  <h3>分享视频</h3>
+  <div class="linkrow"><input id="sharelink" readonly value=""><button onclick="copyLink()">复制</button></div>
+  <div class="opts">
+    <div class="opt"><div class="oic">💬</div>微信群友</div>
+    <div class="opt"><div class="oic">⭕</div>朋友圈</div>
+    <div class="opt"><div class="oic gray">🔗</div>复制链接</div>
+  </div>
+  <div class="note">演示版暂用网页链接分享<br>正式版可接微信小程序卡片分享</div>
+  <button class="cancelbtn" onclick="closeShare()">取消</button>
+</div>
+
+<script>
+var VIDEOS=[
+ {t:"各位退休的同学，请听！",p:"100000+次播放",d:"05:26",a:"音乐阁里的野马",av:"乐",src:"https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerBlazes.mp4"},
+ {t:"🌹🌹今天是9月28日，愿家人朋友平安健康，万事顺心如意！",p:"50983次播放",d:"00:22",a:"细品岁月",av:"细",src:"https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerEscapes.mp4"},
+ {t:"🔥哇！厉害！大开眼界啦！",p:"32871次播放",d:"01:15",a:"开心每一天",av:"开",src:"https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerFun.mp4"},
+ {t:"八段锦教学：每天十分钟，越练越年轻",p:"45210次播放",d:"10:08",a:"健康养生堂",av:"健",src:"https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerJoyrides.mp4"},
+ {t:"戏曲名段欣赏：经典老戏重温",p:"28754次播放",d:"03:42",a:"梨园春色",av:"梨",src:"https://storage.googleapis.com/gtv-videos-bucket/sample/ForBiggerMeltdowns.mp4"},
+ {t:"《蝶变》：徐克最癫狂的处女作，改写香港武侠片规则！",p:"9次播放",d:"01:28:32",a:"香港 - 孔令江 Eddie",av:"孔",src:"https://storage.googleapis.com/gtv-videos-bucket/sample/Sintel.mp4",mine:true},
+ {t:"圣方济各大学毕业作品展 2026 DESIGN WEEK",p:"8次播放",d:"01:21",a:"香港 - 孔令江 Eddie",av:"孔",src:"https://storage.googleapis.com/gtv-videos-bucket/sample/ElephantsDream.mp4",mine:true}
+];
+var ARTICLES=[
+ {t:"中国最长最险峻的峡谷",s:"中国最长最险峻的峡谷，犹如世外桃源",d:"2026/06/26",img:"https://picsum.photos/seed/canyon/800/450",detail:true},
+ {t:"原来裤子上的2根绳子，这样系才正确",s:"很多人都不知道，原来裤子上的2根绳子，这样系才正…",d:"2026/06/26",img:"https://picsum.photos/seed/pants/800/450"},
+ {t:"早起三不要，晚上三不宜，老人要记住",s:"医生提醒：这6个习惯，关系到晚年健康…",d:"2026/06/25",img:"https://picsum.photos/seed/health/800/450"}
+];
+var CREATORS=[
+ {n:"音乐阁里的野马",av:"乐",s:"12.6万粉丝 · 328个作品",f:true},
+ {n:"细品岁月",av:"细",s:"8.3万粉丝 · 156个作品",f:true},
+ {n:"票圈原创视频精选",av:"票",s:"256万粉丝 · 1.2万个作品",f:false},
+ {n:"健康养生堂",av:"健",s:"45万粉丝 · 890个作品",f:false}
+];
+var plays=134, shares=46;
+
+function renderFeed(){
+ var h="";
+ VIDEOS.forEach(function(v,i){
+  h+='<div class="vcard"><div class="vwrap" onclick="togglePlay(this)">'
+   +'<video src="'+v.src+'" preload="metadata" playsinline loop></video>'
+   +'<div class="vtitle">'+v.t+'</div>'
+   +'<div class="vmeta"><span>'+v.p+'</span><span>'+v.d+'</span></div>'
+   +'<div class="bigplay"></div></div>'
+   +'<div class="vfoot"><div class="author"><div class="avatar">'+v.av+'</div><span>'+v.a+'</span></div>'
+   +'<button class="sharebtn" onclick="openShare(\''+v.t.replace(/'/g,"")+'\')">分享</button></div></div>';
+ });
+ document.getElementById("feed").innerHTML=h;
+}
+function togglePlay(w){
+ var v=w.querySelector("video");
+ document.querySelectorAll(".vwrap.playing video").forEach(function(o){if(o!==v){o.pause();o.closest(".vwrap").classList.remove("playing");}});
+ if(v.paused){v.play();w.classList.add("playing");}else{v.pause();w.classList.remove("playing");}
+}
+function renderFollow(){
+ var h="";
+ CREATORS.forEach(function(c,i){
+  h+='<div class="creator"><div class="avatar">'+c.av+'</div><div class="info"><div class="nm">'+c.n+'</div><div class="st">'+c.s+'</div></div>'
+  +'<button class="fbtn'+(c.f?" followed":"")+'" onclick="toggleF('+i+',this)">'+(c.f?"已关注":"+ 关注")+'</button></div>';
+ });
+ document.getElementById("followlist").innerHTML=h;
+}
+function toggleF(i,b){CREATORS[i].f=!CREATORS[i].f;b.classList.toggle("followed");b.textContent=CREATORS[i].f?"已关注":"+ 关注";}
+function renderArts(){
+ var h="";
+ ARTICLES.forEach(function(a){
+  h+='<div class="acard" '+(a.detail?'onclick="go(\'s-artdetail\')"':"")+'><img src="'+a.img+'"><div class="abody"><div class="at">'+a.t+'</div><div class="as">'+a.s+'</div><div class="afoot"><span>'+a.d+'</span><span class="more">查看详情</span></div></div></div>';
+ });
+ document.getElementById("artlist").innerHTML=h;
+}
+function renderWorks(){
+ var h="";
+ VIDEOS.filter(function(v){return v.mine;}).forEach(function(v){
+  h+='<div class="work"><div class="thumb"><img src="https://picsum.photos/seed/'+encodeURIComponent(v.av+v.t.length)+'/400/250"><span class="dur">'+v.d+'</span></div><div class="wt">'+v.t+'</div></div>';
+ });
+ document.getElementById("works").innerHTML=h;
+ document.getElementById("wcount").textContent=VIDEOS.filter(function(v){return v.mine;}).length;
+}
+function go(id,tab){
+ document.querySelectorAll(".screen").forEach(function(s){s.classList.remove("active");});
+ document.getElementById(id).classList.add("active");
+ if(tab){document.querySelectorAll(".tab").forEach(function(t){t.classList.remove("on");});tab.classList.add("on");}
+ window.scrollTo(0,0);
+}
+function ptab(el,which){
+ document.querySelectorAll(".ptab").forEach(function(t){t.classList.remove("on");});el.classList.add("on");
+ document.getElementById("works").style.display=which==="works"?"grid":"none";
+}
+/* 分享 */
+function openShare(title){
+ document.getElementById("sharelink").value=location.origin+location.pathname+"#v="+encodeURIComponent(title||"");
+ document.getElementById("mask").classList.add("show");
+ document.getElementById("sheet").classList.add("show");
+ shares++;document.getElementById("s-shares").textContent=shares;
+}
+function closeShare(){document.getElementById("mask").classList.remove("show");document.getElementById("sheet").classList.remove("show");}
+function copyLink(){var i=document.getElementById("sharelink");i.select();try{document.execCommand("copy");}catch(e){}alert("链接已复制，去微信粘贴分享吧！");}
+/* 上传 */
+function pickFile(){document.getElementById("fileInput").click();}
+function onFile(inp){
+ if(!inp.files||!inp.files[0])return;
+ var url=URL.createObjectURL(inp.files[0]);
+ document.getElementById("preview").src=url;
+ document.getElementById("pubbox").style.display="block";
+ document.getElementById("pubbox").scrollIntoView();
+}
+function publishVideo(){
+ var t=document.getElementById("vtitle").value.trim()||"我的新视频";
+ var src=document.getElementById("preview").src;
+ VIDEOS.unshift({t:t,p:"0次播放",d:"--:--",a:"香港 - 孔令江 Eddie",av:"孔",src:src,mine:true});
+ plays+=1;
+ document.getElementById("st-plays").textContent=plays;
+ document.getElementById("s-plays").textContent=plays;
+ renderFeed();renderWorks();
+ document.getElementById("pubbox").style.display="none";
+ document.getElementById("vtitle").value="";
+ alert("发布成功！已出现在首页和你的作品里。");
+ go("s-home",document.querySelectorAll(".tab")[0]);
+}
+/* 文章点赞 */
+var liked=false;
+function likeArt(){liked=!liked;document.getElementById("artlike").classList.toggle("liked",liked);document.getElementById("artliken").textContent=liked?6183:6182;}
+/* 图表 */
+function chart(id,data,color){
+ var svg=document.getElementById(id),W=340,H=150,pad=28;
+ var max=Math.max.apply(null,data.concat([1]));
+ var xs=data.map(function(_,i){return pad+i*(W-pad*2)/(data.length-1);});
+ var ys=data.map(function(v){return H-24-(v/max)*(H-60);});
+ var pts=xs.map(function(x,i){return x+","+ys[i];}).join(" ");
+ var area=pad+","+(H-24)+" "+pts+" "+(W-pad)+","+(H-24);
+ var labels=["09.21","09.22","09.23","09.24","09.25","09.26","09.27"];
+ var h='<polygon points="'+area+'" fill="'+color+'" opacity="0.25"/>';
+ h+='<polyline points="'+pts+'" fill="none" stroke="'+color+'" stroke-width="2.5"/>';
+ xs.forEach(function(x,i){
+  h+='<circle cx="'+x+'" cy="'+ys[i]+'" r="4" fill="#fff" stroke="'+color+'" stroke-width="2"/>';
+  h+='<text x="'+x+'" y="'+(ys[i]-10)+'" text-anchor="middle" class="lbl" font-size="11" fill="#666">'+data[i]+'</text>';
+  h+='<text x="'+x+'" y="'+(H-6)+'" text-anchor="middle" class="lbl">'+labels[i]+'</text>';
+ });
+ svg.innerHTML=h;
+}
+renderFeed();renderFollow();renderArts();renderWorks();
+chart("c1",[3,0,9,0,0,0,0],"#07c160");
+chart("c2",[0,0,1,0,0,0,0],"#f5a623");
+chart("c3",[0,0,1,0,0,0,0],"#4a90ff");
+</script>
+</body>
+</html>
