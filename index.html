@@ -3,7 +3,12 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+<meta property="og:title" content="講圈 · 香港人講嘢嘅短片平台">
+<meta property="og:description" content="記錄港生活，分享港味道。全年齡香港短視頻平台。">
+<meta property="og:type" content="website">
+<meta property="og:url" content="https://piaoquan-demo.vercel.app/">
 <title>講圈 · 演示版</title>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <meta name="description" content="講圈 — 香港人講嘢嘅短片平台（演示版）">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="講圈">
@@ -130,6 +135,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .sheet .opt{text-align:center;font-size:13px;color:#333}
 .sheet .opt .oic{width:56px;height:56px;border-radius:50%;background:#07c160;color:#fff;font-size:26px;display:flex;align-items:center;justify-content:center;margin:0 auto 6px}
 .sheet .opt .oic.gray{background:#888}
+.wxsteps{font-size:14px;color:#666;line-height:2;text-align:center;margin-bottom:14px}
+.wxtip{position:fixed;top:0;left:0;right:0;background:#07c160;color:#fff;text-align:center;font-size:13px;padding:9px 12px;z-index:9999;line-height:1.5}
 .mask{position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:90;display:none}
 .mask.show{display:block}
 .linkrow{display:flex;gap:8px;margin-bottom:12px}
@@ -297,17 +304,25 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 </div>
 
 <!-- 分享弹窗 -->
-<div class="mask" id="mask" onclick="closeShare()"></div>
+<div class="mask" id="mask" onclick="closeShare();closeWx()"></div>
 <div class="sheet" id="sheet">
   <h3>分享短片</h3>
   <div class="linkrow"><input id="sharelink" readonly value=""><button onclick="copyLink()">複製</button></div>
   <div class="opts">
     <div class="opt" onclick="shareTo('wa')"><div class="oic" style="background:#25D366">💬</div>WhatsApp</div>
+    <div class="opt" onclick="shareTo('wx')"><div class="oic" style="background:#07c160;font-size:22px">微</div>微信</div>
     <div class="opt" onclick="shareTo('fb')"><div class="oic" style="background:#1877F2">📘</div>Facebook</div>
     <div class="opt" onclick="copyLink()"><div class="oic gray">🔗</div>複製連結</div>
   </div>
   <div class="note">IG 冇得直接分享網頁，撳「複製連結」再貼去 IG Story / Bio 就得<br>演示版暫用網頁連結分享</div>
   <button class="cancelbtn" onclick="closeShare()">取消</button>
+</div>
+<!-- 微信分享：QR code -->
+<div class="sheet" id="wxsheet">
+  <h3>分享去微信</h3>
+  <div id="wxqr" style="width:200px;height:200px;margin:0 auto 12px"></div>
+  <div class="wxsteps">1. 用微信掃一掃上面個 QR code<br>2. 喺微信入面開啟後，撳右上角「···」<br>3. 分享給朋友／分享到朋友圈</div>
+  <button class="cancelbtn" onclick="closeWx()">關閉</button>
 </div>
 <div id="toast"></div>
 
@@ -403,6 +418,25 @@ function shareTo(which){
  var url=document.getElementById("sharelink").value;
  if(which==="wa") window.open("https://wa.me/?text="+encodeURIComponent(shareText()+url),"_blank");
  else if(which==="fb") window.open("https://www.facebook.com/sharer/sharer.php?u="+encodeURIComponent(url),"_blank");
+ else if(which==="wx") openWx();
+}
+/* 微信分享：QR code */
+function openWx(){
+ closeShare();
+ var url=document.getElementById("sharelink").value||location.href;
+ var box=document.getElementById("wxqr");box.innerHTML="";
+ try{new QRCode(box,{text:url,width:200,height:200,correctLevel:QRCode.CorrectLevel.M});}
+ catch(e){box.innerHTML='<div style="padding:60px 20px;text-align:center;color:#999;font-size:13px">QR code 載入失敗<br>請用「複製連結」貼去微信</div>';}
+ document.getElementById("mask").classList.add("show");
+ document.getElementById("wxsheet").classList.add("show");
+}
+function closeWx(){document.getElementById("mask").classList.remove("show");document.getElementById("wxsheet").classList.remove("show");}
+/* 微信內開啟提示 */
+if(/MicroMessenger/i.test(navigator.userAgent)){
+ var _wxt=document.createElement("div");_wxt.className="wxtip";
+ _wxt.textContent="喺微信入面開啟緊？撳右上角「···」→ 分享給朋友／朋友圈";
+ document.body.appendChild(_wxt);
+ setTimeout(function(){_wxt.style.display="none";},8000);
 }
 function copyLink(){
  var url=document.getElementById("sharelink").value;
