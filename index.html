@@ -120,6 +120,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .mi .tick::after{content:"";position:absolute;width:22px;height:22px;border-radius:50%;background:#fff;top:2px;left:2px;box-shadow:0 1px 3px rgba(0,0,0,.2);transition:left .2s}
 .mi .tick.on{background:#07c160}
 .mi .tick.on::after{left:22px}
+.minote{background:#fff;padding:10px 18px 14px;font-size:12px;color:#bbb;border-bottom:1px solid #f5f5f5}
 /* ---------- 我：個人資料/幫助/收益/留言 ---------- */
 .pform{background:#fff;padding:6px 18px 4px}
 .pform .flab{font-size:14px;color:#888;margin:18px 0 8px}
@@ -275,8 +276,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
     <div class="mi" onclick="go('s-help')">❓ 幫助與意見 <span class="arr">›</span></div>
     <div class="mi" onclick="go('s-disclaimer')">📜 免責聲明及版權條款 <span class="arr">›</span></div>
     <div class="mi" onclick="copyProfileLink()">🔗 攞個人主頁連結 <span class="arr">›</span></div>
-    <div class="mi" onclick="toggleSetting('shareOthers')">📤 分享嘅短片會帶埋我其他片 <span class="tick" id="tick-share"></span></div>
+    <div class="mi" onclick="toggleSetting('shareOthers')">📤 分享時附上我嘅主頁連結 <span class="tick" id="tick-share"></span></div>
     <div class="mi" onclick="toggleSetting('notifyFollow')">🔔 接收關注更新通知 <span class="tick" id="tick-notify"></span></div>
+    <div class="minote">正式版生效：到時用嚟開關推送通知，你嘅選擇會記住</div>
   </div>
   <div class="piaohao">講圈號：84a113104747（演示）</div>
 </div>
@@ -567,7 +569,8 @@ function openShareV(i){
  _shareTitle=v.t||"講圈短片";
  var url=location.origin+"/api/share-card?t="+encodeURIComponent(_shareTitle)
   +"&img="+encodeURIComponent(videoThumb(v))
-  +"&p="+encodeURIComponent(v.p||"");
+  +"&p="+encodeURIComponent(v.p||"")
+  +"&others="+((_settings.shareOthers)?"1":"0");
  document.getElementById("sharelink").value=url;
  document.getElementById("mask").classList.add("show");
  document.getElementById("sheet").classList.add("show");
