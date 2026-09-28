@@ -582,11 +582,15 @@ function openShare(title){_shareTitle=title||"講圈短片";
  document.getElementById("mask").classList.add("show");
  document.getElementById("sheet").classList.add("show");
 }
-function shareText(){var s="講圈 — 香港人講嘢嘅短片平台：「"+_shareTitle+"」 ";if(typeof _settings!=="undefined"&&_settings.shareOthers)s+="\n睇埋我其他片："+profileURL();return s;}
-function shareTo(which){
+function shareText(){
  var url=document.getElementById("sharelink").value;
- if(which==="wa") window.open("https://wa.me/?text="+encodeURIComponent(shareText()+url),"_blank");
- else if(which==="fb") window.open("https://www.facebook.com/sharer/sharer.php?u="+encodeURIComponent(url),"_blank");
+ var s="講圈 — 香港人講嘢嘅短片平台：「"+_shareTitle+"」\n"+url;
+ if(typeof _settings!=="undefined"&&_settings.shareOthers)s+="\n睇埋我其他片："+profileURL();
+ return s;
+}
+function shareTo(which){
+ if(which==="wa") window.open("https://wa.me/?text="+encodeURIComponent(shareText()),"_blank");
+ else if(which==="fb") window.open("https://www.facebook.com/sharer/sharer.php?u="+encodeURIComponent(document.getElementById("sharelink").value),"_blank");
  else if(which==="wx") openWx();
 }
 /* 微信分享：QR code */
@@ -611,7 +615,7 @@ function copyLink(){
  var url=document.getElementById("sharelink").value;
  var done=function(){toast("連結 copy 咗，貼去 WhatsApp、Facebook、IG 都得");};
  if(navigator.clipboard&&navigator.clipboard.writeText){
-  navigator.clipboard.writeText(shareText()+url).then(done).catch(function(){fallback();});
+  navigator.clipboard.writeText(shareText()).then(done).catch(function(){fallback();});
  }else{fallback();}
  function fallback(){var i=document.getElementById("sharelink");i.select();try{document.execCommand("copy");}catch(e){}done();}
 }
@@ -799,6 +803,26 @@ applyProfile();applySettings();initEditForm();
 chart("c1",[3,0,9,0,0,0,0],"#07c160");
 chart("c2",[0,0,1,0,0,0,0],"#f5a623");
 chart("c3",[0,0,1,0,0,0,0],"#4a90ff");
+/* 分享 deep link：#v=片名 → 自動碌去嗰條片並播放；#u= → 去「我」頁 */
+(function(){
+ try{
+  var h=location.hash||"";
+  var mv=h.match(/#v=([^&]+)/);
+  if(mv){
+   var title=decodeURIComponent(mv[1]),idx=-1;
+   for(var i=0;i<VIDEOS.length;i++){if(VIDEOS[i].t===title){idx=i;break;}}
+   if(idx>=0){
+    go("s-home",document.querySelectorAll(".tab")[0]);
+    setTimeout(function(){
+     var els=document.querySelectorAll("#feed .vcard .vwrap");
+     if(els[idx]){els[idx].scrollIntoView({block:"center"});togglePlay(els[idx]);}
+    },600);
+    return;
+   }
+  }
+  if(/#u=/.test(h)){go("s-profile",document.querySelectorAll(".tab")[4]);}
+ }catch(e){}
+})();
 </script>
 </body>
 </html>

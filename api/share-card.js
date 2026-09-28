@@ -15,9 +15,10 @@ module.exports = (req, res) => {
     return s.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;").replace(/"/g, "&quot;");
   };
   var desc = "記錄港生活，分享港味道。" + (p ? "（" + p + "）" : "");
+  var deeplink = "https://ktalk.hk/#v=" + encodeURIComponent(t);
   var btn =
-    '<a href="https://ktalk.hk/" style="display:block;text-align:center;background:#07c160;color:#fff;' +
-    'border-radius:28px;padding:14px;margin-top:18px;text-decoration:none;font-size:16px;font-weight:700">▶ 去講圈睇片</a>';
+    '<a href="' + deeplink + '" style="display:block;text-align:center;background:#07c160;color:#fff;' +
+    'border-radius:28px;padding:14px;margin-top:18px;text-decoration:none;font-size:16px;font-weight:700">▶ 去講圈睇呢條片</a>';
   if (others) {
     btn +=
       '<a href="https://ktalk.hk/#u=84a113104747" style="display:block;text-align:center;background:#fff;color:#07c160;' +
