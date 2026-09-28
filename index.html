@@ -137,6 +137,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .linkrow button{background:#07c160;color:#fff;border:none;border-radius:8px;padding:0 18px;font-size:14px}
 .cancelbtn{width:100%;border:none;background:#f5f5f5;border-radius:10px;padding:13px;font-size:16px;margin-top:4px}
 .note{font-size:12px;color:#999;text-align:center;margin-top:10px;line-height:1.6}
+/* ---------- 廣告預留位 ---------- */
+.adslot{background:#f0f4f1 !important;border:2px dashed #07c160;box-shadow:none !important}
+.adph{padding:34px 20px;text-align:center;color:#07c160;font-weight:700;font-size:16px}
+.adph .adsub{font-size:12px;color:#999;font-weight:400;margin-top:8px;line-height:1.6}
 /* ---------- toast ---------- */
 #toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);background:rgba(0,0,0,.85);color:#fff;padding:12px 20px;border-radius:24px;font-size:14px;z-index:200;opacity:0;transition:all .25s;pointer-events:none;max-width:86%;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
@@ -340,6 +344,7 @@ function renderFeed(){
    +'<div class="bigplay"></div></div>'
    +'<div class="vfoot"><div class="author"><div class="avatar">'+v.av+'</div><span>'+v.a+'</span></div>'
    +'<button class="sharebtn" onclick="openShare(\''+v.t.replace(/'/g,"")+'\')">分享</button></div></div>';
+  if((i+1)%5===0) h+='<div class="vcard adslot"><div class="adph">📢 廣告預留位<div class="adsub">正式版可接 Google AdSense／Pangle 信息流廣告</div></div></div>';
  });
  document.getElementById("feed").innerHTML=h;
 }
@@ -359,8 +364,9 @@ function renderFollow(){
 function toggleF(i,b){CREATORS[i].f=!CREATORS[i].f;b.classList.toggle("followed");b.textContent=CREATORS[i].f?"已關注":"+ 關注";}
 function renderArts(){
  var h="";
- ARTICLES.forEach(function(a){
+ ARTICLES.forEach(function(a,i){
   h+='<div class="acard" '+(a.detail?'onclick="go(\'s-artdetail\')"':"")+'><img src="'+a.img+'"><div class="abody"><div class="at">'+a.t+'</div><div class="as">'+a.s+'</div><div class="afoot"><span>'+a.d+'</span><span class="more">睇詳情</span></div></div></div>';
+  if(i===1) h+='<div class="acard adslot"><div class="adph">📢 廣告預留位<div class="adsub">正式版可接 Google AdSense／Pangle</div></div></div>';
  });
  document.getElementById("artlist").innerHTML=h;
 }
