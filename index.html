@@ -705,15 +705,18 @@ function toggleF(i,b){CREATORS[i].f=!CREATORS[i].f;b.classList.toggle("followed"
 async function toggleFollowDb(uid,b){
  if(!_user){toast("請先登入");return;}
  var me=_user.id, following=b.classList.contains("followed");
- b.disabled=true;
+ b.disabled=true; b.textContent="…";
+ var done=false;
+ setTimeout(function(){ if(!done){ b.disabled=false; b.textContent=following?"已關注":"+ 關注"; toast("網絡超時，請再試"); } },15000);
  try{
   var r;
   if(following) r=await sbk().from("follows").delete().eq("follower_id",me).eq("following_id",uid);
   else r=await sbk().from("follows").insert({follower_id:me,following_id:uid});
   if(r.error)throw r.error;
+  toast(following?"已取消關注":"已關注 ✔");
   await renderFollow(); await refreshFollowStats();
- }catch(e){ toast("操作失敗，請再試"); }
- b.disabled=false;
+ }catch(e){ toast("操作失敗："+((e&&e.message)||"請再試")); }
+ done=true; b.disabled=false;
 }
 async function refreshFollowStats(){
  if(!_user)return;
