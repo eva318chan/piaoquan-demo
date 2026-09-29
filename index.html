@@ -715,7 +715,7 @@ async function toggleFollowDb(uid,b){
   if(r.error)throw r.error;
   toast(following?"已取消關注":"已關注 ✔");
   await renderFollow(); await refreshFollowStats();
- }catch(e){ toast("操作失敗："+((e&&e.message)||"請再試")); }
+ }catch(e){ toast("操作失敗："+((e&&e.message)||"請再試")); b.textContent=following?"已關注":"+ 關注"; }
  done=true; b.disabled=false;
 }
 async function refreshFollowStats(){
