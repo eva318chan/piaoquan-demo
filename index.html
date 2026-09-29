@@ -47,6 +47,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .rbtn:active{transform:scale(.93)}
 .feedlogo{position:absolute;top:12px;left:14px;z-index:6;color:#fff;font-weight:800;font-size:18px;text-shadow:0 1px 6px rgba(0,0,0,.6);pointer-events:none}
 .feedlogo small{font-size:10px;font-weight:400;opacity:.85;margin-left:6px;border:1px solid rgba(255,255,255,.55);padding:2px 6px;border-radius:8px}
+/* ---------- 頭像（共用圓形） ---------- */
+.avatar{width:34px;height:34px;border-radius:50%;background:linear-gradient(135deg,#07c160,#0a8);color:#fff;display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;flex-shrink:0}
 /* ---------- 底部导航 ---------- */
 .tabbar{position:fixed;bottom:0;left:50%;transform:translateX(-50%);width:100%;max-width:480px;background:#fff;border-top:1px solid #e5e5e5;display:flex;z-index:60}
 .tab{flex:1;text-align:center;padding:8px 0 10px;font-size:12px;color:#888}
@@ -87,6 +89,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .acard .more{color:#e64340;font-size:15px;font-weight:600}
 /* ---------- 文章详情 ---------- */
 .backbtn{position:absolute;left:12px;top:12px;font-size:20px;color:#333;background:none;border:none}
+.stitle{padding:14px 48px;font-size:19px;font-weight:700;text-align:center;background:#fff}
 .art{padding:18px;background:#fff}
 .art h1{font-size:23px;line-height:1.45;margin:6px 0 12px}
 .art .meta{color:#576b95;font-size:14px}
@@ -132,8 +135,19 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .mi .tick.on::after{left:22px}
 .minote{background:#fff;padding:10px 18px 14px;font-size:12px;color:#bbb;border-bottom:1px solid #f5f5f5}
 .ainput{width:100%;border:1px solid #ddd;border-radius:10px;padding:12px;font-size:16px;box-sizing:border-box}
+.ainput:focus{border-color:#07c160;outline:none}
 .abtn{width:100%;background:#07c160;color:#fff;border:none;border-radius:28px;padding:14px;font-size:16px;font-weight:700;margin-top:18px}
+.abtn:disabled{background:#9fd8b8}
 .alabel{font-size:13px;color:#888;margin-bottom:6px}
+.amethod{display:flex;background:#eee;border-radius:12px;padding:4px;margin-bottom:18px}
+.amtab{flex:1;text-align:center;padding:11px;font-size:16px;font-weight:700;color:#888;border-radius:9px}
+.amtab.on{background:#fff;color:#111;box-shadow:0 1px 4px rgba(0,0,0,.12)}
+.aregion{display:flex;gap:10px;margin-bottom:10px}
+.arg{flex:1;text-align:center;border:1.5px solid #e5e5e5;background:#fff;border-radius:10px;padding:13px 6px;font-size:16px;font-weight:700;color:#666}
+.arg.on{border-color:#07c160;color:#07c160;background:#f0faf4}
+.telinput{font-size:20px;letter-spacing:1px}
+.otpinput{font-size:26px;letter-spacing:10px;text-align:center;font-weight:800}
+.optnote{color:#bbb;font-weight:400;font-size:12px}
 /* ---------- 我：個人資料/幫助/收益/留言 ---------- */
 .pform{background:#fff;padding:6px 18px 4px}
 .pform .flab{font-size:14px;color:#888;margin:18px 0 8px}
@@ -157,6 +171,9 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .balcard .b{font-size:38px;font-weight:800;color:#07c160;margin:8px 0}
 .note{margin:0 16px;background:#fff;border-radius:12px;padding:16px;font-size:14px;color:#666;line-height:1.9}
 .piaohao{text-align:center;color:#bbb;font-size:13px;padding:18px}
+.acct{margin-top:10px}
+.acct-id{display:flex;justify-content:space-between;align-items:center;background:#fff;padding:12px 18px;font-size:13px;color:#999;border-bottom:1px solid #f5f5f5}
+.acct-id .v{color:#666;max-width:62%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 /* ---------- 统计数据 ---------- */
 .statgrid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:10px;padding:14px 12px}
 .scard{background:#fff;border-radius:10px;padding:14px 10px;box-shadow:0 1px 4px rgba(0,0,0,.06)}
@@ -274,8 +291,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
     </div>
     <div class="pstats">
       <div><b id="st-plays">134</b><br><span>播放</span></div>
-      <div><b>3</b><br><span>粉絲</span></div>
-      <div><b>4</b><br><span>關注</span></div>
+      <div><b id="st-fans">3</b><br><span>粉絲</span></div>
+      <div><b id="st-follows">4</b><br><span>關注</span></div>
     </div>
   </div>
   <div class="ptabs">
@@ -295,7 +312,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
     <div class="mi" onclick="toggleSetting('notifyFollow')">🔔 接收關注更新通知 <span class="tick" id="tick-notify"></span></div>
     <div class="minote">正式版生效：到時用嚟開關推送通知，你嘅選擇會記住</div>
   </div>
-  <div class="piaohao">講圈號：84a113104747（演示）</div>
+  <div class="piaohao" id="piaohao">講圈號：84a113104747（演示）</div>
   <div id="auth-area"></div>
 </div>
 
@@ -306,20 +323,42 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
     <div class="stitle" id="auth-title">登入講圈</div>
   </div>
   <div style="padding:20px 18px;max-width:480px">
-    <div id="auth-nick-row" style="display:none;margin-bottom:12px">
-      <div class="alabel">暱稱</div>
+    <div class="amethod">
+      <div class="amtab on" id="amtab-phone" onclick="setAuthMethod('phone')">📱 電話</div>
+      <div class="amtab" id="amtab-email" onclick="setAuthMethod('email')">✉️ 電郵</div>
+    </div>
+    <div id="auth-phone-box">
+      <div class="alabel">電話號碼</div>
+      <div class="aregion">
+        <div class="arg on" data-cc="852" onclick="setRegion(this)">🇭🇰 香港 +852</div>
+        <div class="arg" data-cc="86" onclick="setRegion(this)">🇨🇳 內地 +86</div>
+      </div>
+      <input id="auth-tel" class="ainput telinput" type="tel" inputmode="numeric" autocomplete="tel" placeholder="請輸入電話號碼">
+      <div class="alabel" style="margin-top:14px">6 位數字密碼 <span class="optnote">（好似提款卡密碼咁，好記）</span></div>
+      <input id="auth-pin" class="ainput otpinput" type="tel" inputmode="numeric" maxlength="6" placeholder="6 位數字">
+      <div class="alabel" style="margin-top:14px">暱稱 <span class="optnote">（新用戶先要填）</span></div>
       <input id="auth-nick" class="ainput" placeholder="大家點叫你" maxlength="20">
+      <div class="alabel" style="margin-top:14px">電郵 <span class="optnote">（選填）</span></div>
+      <input id="auth-email2" class="ainput" type="email" autocomplete="email" placeholder="選填，方便日後聯絡你">
+      <button class="abtn" id="phone-go" onclick="phoneAuth()">登入／註冊</button>
+      <div style="text-align:center;margin-top:12px;font-size:12px;color:#bbb">未註冊過嘅電話號碼會自動開新帳號 · 唔使收 SMS</div>
     </div>
-    <div class="alabel">電郵</div>
-    <input id="auth-email" class="ainput" type="email" placeholder="you@example.com" autocomplete="email">
-    <div class="alabel" style="margin-top:12px">密碼</div>
-    <input id="auth-pass" class="ainput" type="password" placeholder="至少6個字" autocomplete="current-password">
-    <button class="abtn" id="auth-go" onclick="doAuth()">登入</button>
-    <div style="text-align:center;margin-top:16px;font-size:14px;color:#888">
-      <span id="auth-switch-q">未有帳號？</span>
-      <a href="javascript:toggleAuthMode()" id="auth-switch" style="color:#07c160;font-weight:700;text-decoration:none">立即註冊</a>
+    <div id="auth-email-box" style="display:none">
+      <div id="auth-nick-row" style="display:none;margin-bottom:12px">
+        <div class="alabel">暱稱</div>
+        <input id="auth-nick-em" class="ainput" placeholder="大家點叫你" maxlength="20">
+      </div>
+      <div class="alabel">電郵</div>
+      <input id="auth-email" class="ainput" type="email" placeholder="you@example.com" autocomplete="email">
+      <div class="alabel" style="margin-top:12px">密碼</div>
+      <input id="auth-pass" class="ainput" type="password" placeholder="至少6個字" autocomplete="current-password">
+      <button class="abtn" id="auth-go" onclick="doAuth()">登入</button>
+      <div style="text-align:center;margin-top:16px;font-size:14px;color:#888">
+        <span id="auth-switch-q">未有帳號？</span>
+        <a href="javascript:toggleAuthMode()" id="auth-switch" style="color:#07c160;font-weight:700;text-decoration:none">立即註冊</a>
+      </div>
     </div>
-    <div style="text-align:center;margin-top:12px;font-size:12px;color:#bbb">註冊後就可以出片，一個電郵一個帳號</div>
+    <div style="text-align:center;margin-top:14px;font-size:12px;color:#bbb">一個電話一個帳號 · 6 位數字密碼 · 註冊後就可以出片</div>
   </div>
 </div>
 
@@ -331,8 +370,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
   </div>
   <div class="statgrid">
     <div class="scard"><div class="lb">總播放次數</div><div class="vl" id="s-plays">134</div><div class="yd">尋日新增 0</div></div>
-    <div class="scard"><div class="lb">粉絲數</div><div class="vl">3</div><div class="yd">尋日新增 0</div></div>
-    <div class="scard"><div class="lb">被收藏次數</div><div class="vl">1</div><div class="yd">尋日新增 0</div></div>
+    <div class="scard"><div class="lb">粉絲數</div><div class="vl" id="s-fans">3</div><div class="yd">尋日新增 0</div></div>
+    <div class="scard"><div class="lb">被收藏次數</div><div class="vl" id="s-favs">1</div><div class="yd">尋日新增 0</div></div>
     <div class="scard"><div class="lb">被分享次數</div><div class="vl" id="s-shares">46</div><div class="yd">尋日新增 0</div></div>
   </div>
   <div class="sect">
@@ -502,8 +541,8 @@ var VIDEOS=[
  {t:"🔥哇！勁！大開眼界！",p:"32871次播放",d:"00:20",a:"開心每一天",av:"開",src:"https://samplelib.com/mp4/sample-20s.mp4"},
  {t:"八段錦教學：每日十分鐘，越練越後生",p:"45210次播放",d:"00:10",a:"健康養生堂",av:"健",src:"https://samplelib.com/mp4/sample-10s.mp4"},
  {t:"粵曲名段欣賞：經典重溫",p:"28754次播放",d:"00:05",a:"梨園春色",av:"梨",src:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"},
- {t:"《蝶变》：徐克最癫狂的处女作，改写香港武侠片规则！",p:"9次播放",d:"00:05",a:"香港 - 孔令江 Eddie",av:"孔",src:"https://samplelib.com/mp4/sample-5s.mp4",mine:true},
- {t:"圣方济各大学毕业作品展 2026 DESIGN WEEK",p:"8次播放",d:"00:05",a:"香港 - 孔令江 Eddie",av:"孔",src:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",mine:true}
+ {t:"《蝶变》：徐克最癫狂的处女作，改写香港武侠片规则！",p:"9次播放",d:"00:05",a:"香港 - 孔令江 Eddie",av:"孔",src:"https://samplelib.com/mp4/sample-5s.mp4",demo:true},
+ {t:"圣方济各大学毕业作品展 2026 DESIGN WEEK",p:"8次播放",d:"00:05",a:"香港 - 孔令江 Eddie",av:"孔",src:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",demo:true}
 ];
 var ARTICLES=[
  {t:"中國最長最險峻嘅峽谷",s:"中國最長最險峻嘅峽谷，猶如世外桃源",d:"2026/06/26",img:"https://picsum.photos/seed/canyon/800/450",detail:true},
@@ -516,7 +555,7 @@ var CREATORS=[
  {n:"講圈精選",av:"講",s:"256萬粉絲 · 1.2萬個作品",f:false},
  {n:"健康養生堂",av:"健",s:"45萬粉絲 · 890個作品",f:false}
 ];
-var plays=134, shares=46;
+var plays=134, shares=46, _shareBase=0;
 
 function streamThumb(uid){return "https://videodelivery.net/"+uid+"/thumbnails/thumbnail.jpg";}
 function videoThumb(v){return (v.stream&&v.uid)?streamThumb(v.uid):("https://picsum.photos/seed/"+encodeURIComponent(v.av+v.t.length)+"/800/450");}
@@ -610,12 +649,39 @@ function renderArts(){
 }
 function renderWorks(){
  var h="";
- VIDEOS.filter(function(v){return v.mine;}).forEach(function(v){
+ myVideos().forEach(function(v){
   var thumb=(v.stream&&v.uid)?streamThumb(v.uid):("https://picsum.photos/seed/"+encodeURIComponent(v.av+v.t.length)+"/400/250");
   h+='<div class="work"><div class="thumb"><img src="'+thumb+'"><span class="dur">'+v.d+'</span></div><div class="wt">'+v.t+'</div></div>';
  });
  document.getElementById("works").innerHTML=h;
- document.getElementById("wcount").textContent=VIDEOS.filter(function(v){return v.mine;}).length;
+ refreshMyStats();
+}
+/* ---------- 會員資料隔離 ---------- */
+/* 未登入 = 演示模式（睇示範片＋示範數字）；登入會員 = 只睇自己嘅片＋真實數字 */
+function myVideos(){return VIDEOS.filter(function(v){return v.mine||(!_user&&v.demo);});}
+function vPlaysNum(v){var m=String(v.p||"").match(/(\d+)/);return m?parseInt(m[1],10):0;}
+function setT(id,txt){var e=document.getElementById(id);if(e)e.textContent=txt;}
+/* 每個會員一個固定講圈號（由 user id 穩定生成，唔使改 database） */
+function memberPiaohao(){
+ var s=(_user&&_user.id)||"";if(!s)return "--------";
+ var h1=0,h2=0;
+ for(var i=0;i<s.length;i++){var c=s.charCodeAt(i);h1=((h1*31)+c)>>>0;h2=((h2*37)+c+i)>>>0;}
+ return (String(h1).padStart(10,"0")+String(h2).padStart(10,"0")).slice(0,12);
+}
+function refreshMyStats(){
+ var demo=!_user, my=myVideos();
+ var pl=demo?plays:my.reduce(function(s,v){return s+vPlaysNum(v);},0);
+ var sh=demo?shares:(shares-_shareBase);
+ setT("wcount",my.length);
+ setT("st-plays",pl);setT("s-plays",pl);
+ setT("st-fans",demo?3:0);setT("s-fans",demo?3:0);
+ setT("st-follows",demo?4:0);
+ setT("s-favs",demo?1:0);
+ setT("s-shares",sh);
+ var ph=document.getElementById("piaohao");
+ if(ph)ph.textContent=demo?"講圈號：84a113104747（演示）":("講圈號："+memberPiaohao());
+ if(demo){chart("c1",[3,0,9,0,0,0,0],"#07c160");chart("c2",[0,0,1,0,0,0,0],"#f5a623");chart("c3",[0,0,1,0,0,0,0],"#4a90ff");}
+ else{var z=[0,0,0,0,0,0,0];chart("c1",z,"#07c160");chart("c2",z,"#f5a623");chart("c3",z,"#4a90ff");}
 }
 function go(id,tab){
  document.querySelectorAll(".screen").forEach(function(s){s.classList.remove("active");});
@@ -643,7 +709,7 @@ function openShareV(i){
  document.getElementById("sharelink").value=url;
  document.getElementById("mask").classList.add("show");
  document.getElementById("sheet").classList.add("show");
- shares++;document.getElementById("s-shares").textContent=shares;
+ shares++;refreshMyStats();
 }
 function openShare(title){_shareTitle=title||"講圈短片";
  var url=location.origin+"/api/share-card?t="+encodeURIComponent(_shareTitle);
@@ -735,11 +801,6 @@ function startStreamUpload(file){
    if(xhr.status>=200&&xhr.status<300){
     _streamUid=j.uid;bar.style.width="100%";
     stat.textContent="上傳完成！雲端轉碼緊，出片後首頁會用雲端播放";
-    try{
-     var saved=JSON.parse(localStorage.getItem("kongtalk_my_streams")||"[]");
-     saved.unshift({uid:j.uid,t:document.getElementById("vtitle").value.trim()||"我嘅新短片"});
-     localStorage.setItem("kongtalk_my_streams",JSON.stringify(saved.slice(0,50)));
-    }catch(e){}
    }else streamFail("HTTP "+xhr.status);
   };
   xhr.onerror=function(){streamFail("連線中斷");};
@@ -759,15 +820,18 @@ async function publishVideo(){
   if(_sb&&_user){
    try{await sbk().from("videos").insert({user_id:_user.id,title:t,stream_uid:_streamUid});}catch(e){}
   }
+  try{
+   var saved=JSON.parse(localStorage.getItem("kongtalk_my_streams")||"[]");
+   saved.unshift({uid:_streamUid,t:t,a:aname,av:aav});
+   localStorage.setItem("kongtalk_my_streams",JSON.stringify(saved.slice(0,50)));
+  }catch(e){}
  }else{
   /* fallback：冇雲端 uid 就用返原本本地 blob 預覽 */
   var src=document.getElementById("preview").src;
   v={t:t,p:"0次播放",d:"--:--",a:aname,av:aav,src:src,mine:true};
  }
  VIDEOS.unshift(v);
- plays+=1;
- document.getElementById("st-plays").textContent=plays;
- document.getElementById("s-plays").textContent=plays;
+ if(!_user)plays+=1;
  renderFeed();renderWorks();
  document.getElementById("pubbox").style.display="none";
  document.getElementById("vtitle").value="";
@@ -826,7 +890,7 @@ function applySettings(){
  if(ts)ts.classList.toggle("on",!!_settings.shareOthers);
  if(tn)tn.classList.toggle("on",!!_settings.notifyFollow);
 }
-function profileURL(){return location.origin+location.pathname+"#u=84a113104747";}
+function profileURL(){return location.origin+location.pathname+"#u="+(_user?memberPiaohao():"84a113104747");}
 function copyProfileLink(){
  var url=profileURL();
  var done=function(){toast("個人主頁連結已複製");};
@@ -878,7 +942,7 @@ function chart(id,data,color){
 try{
  var _saved=JSON.parse(localStorage.getItem("kongtalk_my_streams")||"[]");
  _saved.forEach(function(s){
-  if(s&&s.uid) VIDEOS.unshift({t:s.t||"我嘅新短片",p:"0次播放",d:"--:--",a:"香港 - 孔令江 Eddie",av:"孔",uid:s.uid,mine:true,stream:true});
+  if(s&&s.uid) VIDEOS.unshift({t:s.t||"我嘅新短片",p:"0次播放",d:"--:--",a:s.a||"香港 - 孔令江 Eddie",av:s.av||"孔",uid:s.uid,mine:true,stream:true});
  });
 }catch(e){}
 renderFeed();renderFollow();renderArts();renderWorks();
@@ -904,6 +968,72 @@ async function refreshSbToken(){
  }catch(e){_sbToken=null;}
 }
 var _authMode="login";
+var _authMethod="phone",_region="852";
+function setAuthMethod(m){
+ _authMethod=m;
+ document.getElementById("amtab-phone").classList.toggle("on",m==="phone");
+ document.getElementById("amtab-email").classList.toggle("on",m==="email");
+ document.getElementById("auth-phone-box").style.display=m==="phone"?"block":"none";
+ document.getElementById("auth-email-box").style.display=m==="email"?"block":"none";
+}
+function setRegion(el){
+ _region=el.getAttribute("data-cc");
+ var boxes=el.parentNode.querySelectorAll(".arg");
+ for(var i=0;i<boxes.length;i++)boxes[i].classList.toggle("on",boxes[i]===el);
+}
+function normPhone(){
+ var d=document.getElementById("auth-tel").value.replace(/\D/g,"").replace(/^0+/,"");
+ if(!d){toast("請輸入電話號碼");return null;}
+ if(_region==="852"&&d.length!==8){toast("香港電話號碼係 8 位數字");return null;}
+ if(_region==="86"&&d.length!==11){toast("內地電話號碼係 11 位數字");return null;}
+ return "+"+_region+d;
+}
+/* 電話＋6位數字密碼：新號碼自動註冊，舊號碼直接登入；唔使 SMS
+   背後用合成電郵 (電話@phone.ktalk.hk) 行 Supabase 電郵註冊，用家只見電話號碼 */
+var PHONE_DOMAIN="@phone.ktalk.hk";
+function phoneToEmail(phone){return phone.replace("+","")+PHONE_DOMAIN;}
+function emailToPhone(email){
+ if(email&&email.slice(-PHONE_DOMAIN.length)===PHONE_DOMAIN)return "+"+email.slice(0,-PHONE_DOMAIN.length);
+ return email;
+}
+async function phoneAuth(){
+ if(!_sb){toast("會員系統連接緊，請稍後再試");return;}
+ var phone=normPhone();if(!phone)return;
+ var pin=document.getElementById("auth-pin").value.replace(/\D/g,"");
+ if(pin.length<6){toast("請輸入 6 位數字密碼");return;}
+ var semail=phoneToEmail(phone);
+ var btn=document.getElementById("phone-go");btn.disabled=true;btn.textContent="處理緊…";
+ try{
+  var r=await _sb.auth.signInWithPassword({email:semail,password:pin});
+  if(r.error){
+   if(/invalid login credentials/i.test(r.error.message||"")){
+    var s=await _sb.auth.signUp({email:semail,password:pin});
+    if(s.error){
+     if(/already registered|already exists/i.test(s.error.message||"")){toast("密碼唔啱，請再試");return;}
+     throw s.error;
+    }
+    if(!s.data.session){toast("註冊成功，請再撳一次登入");return;}
+    _user=s.data.user;
+    var nick=document.getElementById("auth-nick").value.trim()||phone;
+    var email2=document.getElementById("auth-email2").value.trim();
+    var prof={id:_user.id,nickname:nick,avatar_text:(nick.charAt(0)||"講")};
+    if(email2)prof.email=email2;
+    try{await sbk().from("profiles").upsert(prof);}
+    catch(e){try{delete prof.email;await sbk().from("profiles").upsert(prof);}catch(e2){}}
+    toast("註冊成功，歡迎 "+nick+"！");
+   }else throw r.error;
+  }else{_user=r.data.user;toast("登入成功！");}
+  await refreshSbToken();
+  _shareBase=shares;
+  await loadSbProfile();
+  fillEditForm();renderAuthArea();
+  try{await loadCommunity();}catch(e){}
+  refreshMyStats();
+  go("s-profile");
+ }catch(e){
+  toast("失敗："+((e&&e.message)||"請再試"));
+ }finally{btn.disabled=false;btn.textContent="登入／註冊";}
+}
 function toggleAuthMode(){
  _authMode=_authMode==="login"?"register":"login";
  var reg=_authMode==="register";
@@ -922,7 +1052,7 @@ async function doAuth(){
  try{
   if(_authMode==="register"){
    if(pass.length<6){toast("密碼至少6個字");return;}
-   var nick=document.getElementById("auth-nick").value.trim()||email.split("@")[0];
+   var nick=document.getElementById("auth-nick-em").value.trim()||email.split("@")[0];
    var r=await _sb.auth.signUp({email:email,password:pass});
    if(r.error)throw r.error;
    if(!r.data.session){toast("註冊成功！請去電郵撳確認連結，再返嚟登入");_authMode="login";toggleAuthMode();return;}
@@ -937,8 +1067,11 @@ async function doAuth(){
   }
   await refreshSbToken();
   await loadSbProfile();
+  _shareBase=shares;
   fillEditForm();
   renderAuthArea();
+  try{await loadCommunity();}catch(e){}
+  refreshMyStats();
   go("s-profile");
  }catch(e){
   var m=(e&&e.message)||"請再試";
@@ -961,16 +1094,16 @@ async function loadSbProfile(){
 }
 async function doLogout(){
  try{if(_sb)await _sb.auth.signOut();}catch(e){}
- _user=null;_sbProfile=null;_sbToken=null;
+ _user=null;_sbProfile=null;_sbToken=null;_shareBase=0;
  _profile={name:"香港 - 孔令江 Eddie",bio:"",gender:"",age:"",tags:[]};
  try{var _p=JSON.parse(localStorage.getItem("kongtalk_profile")||"null");if(_p)_profile=_p;}catch(e){}
- applyProfile();renderAuthArea();fillEditForm();toast("已登出");
+ VIDEOS.forEach(function(v){v.mine=false;});
+ applyProfile();renderAuthArea();fillEditForm();refreshMyStats();toast("已登出");
 }
 function renderAuthArea(){
  var el=document.getElementById("auth-area");if(!el)return;
  if(_user){
-  var nick=(_sbProfile&&_sbProfile.nickname)||_profile.name||"講圈用戶";
-  el.innerHTML='<div class="mi"><span>👤 '+escHtml(nick)+'</span><span style="font-size:12px;color:#bbb">'+escHtml(_user.email||"")+'</span></div>'
+  el.innerHTML='<div class="acct"><div class="acct-id"><span>登入帳號</span><span class="v">'+escHtml(emailToPhone(_user.email)||"")+'</span></div></div>'
    +'<div class="mi" onclick="doLogout()">🚪 登出 <span class="arr">›</span></div>';
  }else{
   el.innerHTML='<div class="mi" onclick="go(\'s-auth\')">👤 登入／註冊 <span class="arr">›</span></div>';
@@ -985,15 +1118,20 @@ async function loadCommunity(){
   var um={};rows.forEach(function(x){um[x.user_id]=1;});
   var pr=await sbk().from("profiles").select("id,nickname").in("id",Object.keys(um));
   var pmap={};(pr.data||[]).forEach(function(p){pmap[p.id]=p.nickname;});
-  var seen={};VIDEOS.forEach(function(v){if(v.uid)seen[v.uid]=1;});
-  var fresh=[];
+  var byUid={};VIDEOS.forEach(function(v){if(v.uid)byUid[v.uid]=v;});
+  var me=_user&&_user.id, fresh=[];
   rows.forEach(function(x){
-   if(!x.stream_uid||seen[x.stream_uid])return;
-   seen[x.stream_uid]=1;
+   if(!x.stream_uid)return;
    var nick=pmap[x.user_id]||"講圈用戶";
-   fresh.push({t:x.title||"講圈短片",p:(x.plays||0)+"次播放",d:"--:--",a:nick,av:(nick.charAt(0)||"講"),uid:x.stream_uid,stream:true,community:true});
+   var isMine=!!me&&x.user_id===me;
+   var ex=byUid[x.stream_uid];
+   if(ex){ex.mine=isMine;return;}
+   var v={t:x.title||"講圈短片",p:(x.plays||0)+"次播放",d:"--:--",a:nick,av:(nick.charAt(0)||"講"),uid:x.stream_uid,stream:true,community:true};
+   if(isMine)v.mine=true;
+   fresh.push(v);byUid[x.stream_uid]=v;
   });
-  if(fresh.length){VIDEOS=fresh.concat(VIDEOS);renderFeed();renderWorks();}
+  if(fresh.length){VIDEOS=fresh.concat(VIDEOS);}
+  renderFeed();renderWorks();
  }catch(e){}
 }
 /* 開機：還原登入狀態＋載入社群影片 */
@@ -1002,10 +1140,11 @@ async function loadCommunity(){
  if(!_sb)return;
  try{
   var s=await _sb.auth.getSession();
-  if(s.data&&s.data.session){_user=s.data.session.user;await refreshSbToken();await loadSbProfile();}
+  if(s.data&&s.data.session){_user=s.data.session.user;await refreshSbToken();_shareBase=shares;await loadSbProfile();}
  }catch(e){}
  renderAuthArea();
- loadCommunity();
+ await loadCommunity();
+ refreshMyStats();
 })();
 
 /* 分享 deep link：#v=片名 → 自動碌去嗰條片並播放；#u= → 去「我」頁 */
