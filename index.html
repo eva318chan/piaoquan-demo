@@ -283,8 +283,8 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 <div class="screen" id="s-profile">
   <div class="phead">
     <div class="prow">
-      <div class="avatar">孔</div>
-      <div class="nm">香港 - 孔令江 Eddie</div>
+      <div class="avatar">講</div>
+      <div class="nm">講圈用戶</div>
       <div class="picons">
         <div class="pic" onclick="go('s-stats')">📊<span>數據</span></div>
         <div class="pic" onclick="scrollToMenu()">⚙️<span>設置</span></div>
@@ -852,8 +852,8 @@ function startStreamUpload(file){
 async function publishVideo(){
  if(_sb&&!_user){toast("請先登入或註冊先可以出片");go("s-auth");return;}
  var t=document.getElementById("vtitle").value.trim()||"我嘅新短片";
- var aname=(_user&&_sbProfile&&_sbProfile.nickname)||_profile.name||"香港 - 孔令江 Eddie";
- var aav=(aname.trim().charAt(0))||"孔";
+ var aname=(_user&&_sbProfile&&_sbProfile.nickname)||_profile.name||"講圈用戶";
+ var aav=(aname.trim().charAt(0))||"講";
  var v;
  if(_streamUid){
   v={t:t,p:"0次播放",d:"--:--",a:aname,av:aav,uid:_streamUid,mine:true,stream:true};
@@ -880,13 +880,13 @@ async function publishVideo(){
  go("s-home",document.querySelectorAll(".tab")[0]);
 }
 /* ---------- 我：個人資料 / 設定 ---------- */
-var _profile={name:"香港 - 孔令江 Eddie",bio:"",gender:"",age:"",tags:[]};
+var _profile={name:"講圈用戶",bio:"",gender:"",age:"",tags:[]};
 try{var _p=JSON.parse(localStorage.getItem("kongtalk_profile")||"null");if(_p)_profile=_p;}catch(e){}
 var _settings={shareOthers:true,notifyFollow:true};
 try{var _s=JSON.parse(localStorage.getItem("kongtalk_settings")||"null");if(_s)_settings=Object.assign(_settings,_s);}catch(e){}
 function applyProfile(){
- var nm=document.querySelector("#s-profile .nm");if(nm)nm.textContent=_profile.name||"香港 - 孔令江 Eddie";
- var ch=((_profile.name||"孔").trim().charAt(0))||"孔";
+ var nm=document.querySelector("#s-profile .nm");if(nm)nm.textContent=_profile.name||"講圈用戶";
+ var ch=((_profile.name||"講").trim().charAt(0))||"講";
  var av=document.querySelector("#s-profile .avatar");if(av)av.textContent=ch;
  var ea=document.getElementById("ep-avatar");if(ea)ea.textContent=ch;
 }
@@ -908,7 +908,7 @@ function fillEditForm(){
  markPills("ep-tags",_profile.tags||[]);
 }
 async function saveProfile(){
- _profile.name=document.getElementById("ep-name").value.trim()||"香港 - 孔令江 Eddie";
+ _profile.name=document.getElementById("ep-name").value.trim()||"講圈用戶";
  _profile.bio=document.getElementById("ep-bio").value.trim();
  var g=document.querySelector("#ep-gender .pill.on");_profile.gender=g?g.getAttribute("data-v"):"";
  var a=document.querySelector("#ep-age .pill.on");_profile.age=a?a.getAttribute("data-v"):"";
@@ -982,7 +982,7 @@ function chart(id,data,color){
 try{
  var _saved=JSON.parse(localStorage.getItem("kongtalk_my_streams")||"[]");
  _saved.forEach(function(s){
-  if(s&&s.uid) VIDEOS.unshift({t:s.t||"我嘅新短片",p:"0次播放",d:"--:--",a:s.a||"香港 - 孔令江 Eddie",av:s.av||"孔",uid:s.uid,mine:true,stream:true});
+  if(s&&s.uid) VIDEOS.unshift({t:s.t||"我嘅新短片",p:"0次播放",d:"--:--",a:s.a||"講圈用戶",av:s.av||"講",uid:s.uid,mine:true,stream:true});
  });
 }catch(e){}
 renderFeed();renderFollow();renderArts();renderWorks();
@@ -1126,7 +1126,7 @@ async function loadSbProfile(){
   var r=await sbk().from("profiles").select("*").eq("id",_user.id).single();
   if(r.data){
    _sbProfile=r.data;
-   if(r.data.nickname)_profile.name=r.data.nickname;
+   _profile.name=r.data.nickname||"講圈用戶";
    if(r.data.bio!=null)_profile.bio=r.data.bio;
    applyProfile();
   }
@@ -1135,7 +1135,7 @@ async function loadSbProfile(){
 async function doLogout(){
  try{if(_sb)await _sb.auth.signOut();}catch(e){}
  _user=null;_sbProfile=null;_sbToken=null;_shareBase=0;
- _profile={name:"香港 - 孔令江 Eddie",bio:"",gender:"",age:"",tags:[]};
+ _profile={name:"講圈用戶",bio:"",gender:"",age:"",tags:[]};
  try{var _p=JSON.parse(localStorage.getItem("kongtalk_profile")||"null");if(_p)_profile=_p;}catch(e){}
  VIDEOS.forEach(function(v){v.mine=false;});
  applyProfile();renderAuthArea();fillEditForm();refreshMyStats();toast("已登出");
