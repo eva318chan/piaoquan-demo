@@ -48,10 +48,13 @@ module.exports = async (req, res) => {
   }
 
   const base = "https://api.cloudflare.com/client/v4/accounts/" + ACCOUNT_ID + "/stream";
+  // videos 表喺 ktalk schema，REST 必須指明 profile，否則會查錯 public schema
   const sbh = {
     apikey: SB_ANON,
     Authorization: "Bearer " + req.headers["x-sb-token"],
-    "Content-Type": "application/json"
+    "Content-Type": "application/json",
+    "Accept-Profile": "ktalk",
+    "Content-Profile": "ktalk"
   };
 
   try {
@@ -77,11 +80,16 @@ module.exports = async (req, res) => {
       return;
     }
 
-    // 3) 刪除 ktalk.videos 行（靠 RLS delete policy：只可以刪自己嘅）
-    await fetch(
+    // 3) 刪除 ktalk.videos 行（靠 RLS delete policy：只可以刪自己嘅），並驗證真係刪到
+    const del = await fetch(
       SB_URL + "/rest/v1/videos?stream_uid=eq." + encodeURIComponent(uid),
-      { method: "DELETE", headers: sbh }
+      { method: "DELETE", headers: Object.assign({ Prefer: "return=representation" }, sbh) }
     );
+    const gone = await del.json().catch(() => []);
+    if (!del.ok || !gone || !gone.length) {
+      res.status(502).json({ ok: false, error: "刪除資料庫記錄失敗，請再試" });
+      return;
+    }
 
     res.status(200).json({ ok: true });
   } catch (e) {
