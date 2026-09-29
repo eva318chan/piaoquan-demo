@@ -766,7 +766,7 @@ async function renderArts(){
    });
   }
  }catch(e){}
- ARTICLES.forEach(function(a,i){
+ if(!(_myArtsOnly&&_user))ARTICLES.forEach(function(a,i){
   h+='<div class="acard" '+(a.detail?'onclick="go(\'s-artdetail\')"':"")+'><img src="'+a.img+'"><div class="abody"><div class="at">'+a.t+'</div><div class="as">'+a.s+'</div><div class="afoot"><span>'+a.d+'</span><span class="more">睇詳情</span></div></div></div>';
   if(i===1) h+='<div class="acard adslot"><div class="adph">📢 廣告預留位<div class="adsub">正式版可接 Google AdSense／Pangle</div></div></div>';
  });
