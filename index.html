@@ -639,11 +639,21 @@ function pauseAllV(){
  });
 }
 /* 播某條片：先停其他；有聲播唔到就自動轉靜音播 */
+/* 播放計數：每條片每個 page-load 只計一次，畫面即時 +1，後端同步加 */
+var _bumped={};
+function bumpPlay(v){
+ if(!v||!v.stream||!v.uid||_bumped[v.uid])return;
+ _bumped[v.uid]=1;
+ var n=vPlaysNum(v)+1;v.p=n+"次播放";
+ try{refreshMyStats();}catch(e){}
+ try{fetch("/api/bump-play",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({uid:v.uid})}).catch(function(){});}catch(e){}
+}
 function playVwrap(w){
  if(w.classList.contains("playing"))return;
  pauseAllV();
  w.classList.add("playing");
  var i=+w.getAttribute("data-i"),v=VIDEOS[i];
+ bumpPlay(v);
  if(v&&v.stream&&v.uid){
   /* Cloudflare Stream 播放器 */
   var im=document.createElement("iframe");
