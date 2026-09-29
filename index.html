@@ -767,7 +767,7 @@ function openShare(title){_shareTitle=title||"講圈短片";
 function shareText(){
  var url=document.getElementById("sharelink").value;
  var s="講圈 — 香港人講嘢嘅短片平台：「"+_shareTitle+"」\n"+url;
- if(typeof _settings!=="undefined"&&_settings.shareOthers)s+="\n睇埋我其他片："+profileURL();
+ if(typeof _settings!=="undefined"&&_settings.shareOthers)s+="\n\n睇埋我其他片："+profileURL();
  return s;
 }
 function shareTo(which){
