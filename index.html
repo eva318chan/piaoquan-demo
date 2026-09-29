@@ -211,6 +211,18 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 /* ---------- toast ---------- */
 #toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);background:rgba(0,0,0,.85);color:#fff;padding:12px 20px;border-radius:24px;font-size:14px;z-index:200;opacity:0;transition:all .25s;pointer-events:none;max-width:86%;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+/* ---------- 關注＋好文發佈 ---------- */
+.arttop{padding:12px 14px 4px;display:flex;justify-content:flex-end}
+.pubartbtn{background:#07c160;color:#fff;border:none;border-radius:20px;padding:8px 18px;font-size:14px;font-weight:700}
+.wtop{position:relative;background:#fff}
+.ainput{width:calc(100% - 28px);margin:12px 14px 0;padding:12px;border:1px solid #e5e5e5;border-radius:10px;font-size:16px;box-sizing:border-box}
+.abody-input{width:calc(100% - 28px);margin:10px 14px 0;padding:12px;border:1px solid #e5e5e5;border-radius:10px;font-size:15px;min-height:220px;line-height:1.7;box-sizing:border-box}
+.aimgrow{padding:12px 14px}
+.aimgbtn{display:inline-block;background:#f2f2f2;border-radius:10px;padding:10px 16px;font-size:14px;color:#333}
+#art-imgprev{max-width:100%;border-radius:10px;margin-bottom:10px;display:none}
+.delartbtn{display:block;margin:24px auto;background:#fff;border:1px solid #e5e5e5;color:#999;border-radius:20px;padding:8px 20px;font-size:14px}
+.followstat{padding:12px 16px 0;color:#888;font-size:13px}
+.empty{padding:40px 20px;text-align:center;color:#999;font-size:14px;line-height:1.8}
 </style>
 </head>
 <body>
@@ -253,7 +265,28 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 
 <!-- ============ 美文 ============ -->
 <div class="screen" id="s-articles">
+  <div class="arttop"><button class="pubartbtn" onclick="goWrite()">✍️ 寫文章</button></div>
   <div id="artlist"></div>
+</div>
+
+<!-- ============ 寫文章 ============ -->
+<div class="screen" id="s-artwrite">
+  <div class="wtop">
+    <button class="backbtn" onclick="go('s-articles')">‹</button>
+    <div class="topbar" style="border:none">寫文章</div>
+  </div>
+  <input id="art-title" class="ainput" maxlength="60" placeholder="標題（例如：今日去咗邊度玩）">
+  <textarea id="art-body" class="abody-input" placeholder="寫低你想講嘅嘢…"></textarea>
+  <div class="aimgrow">
+    <img id="art-imgprev">
+    <label class="aimgbtn">📷 加圖片<input type="file" id="art-img" accept="image/*" style="display:none" onchange="previewArtImg(this)"></label>
+  </div>
+  <div style="padding:0 14px 30px"><button class="pubbtn" id="art-pubbtn" onclick="publishArticle()" style="width:100%">發佈</button></div>
+</div>
+
+<!-- ============ 用戶文章詳情 ============ -->
+<div class="screen" id="s-myart">
+  <div id="myartbox"></div>
 </div>
 
 <!-- ============ 文章详情 ============ -->
@@ -632,22 +665,157 @@ function initFeedObserver(){
  },{root:feed,threshold:[0,0.5,0.75,1]});
  feed.querySelectorAll(".vcard").forEach(function(c){_feedObs.observe(c);});
 }
-function renderFollow(){
+var _followMap={}, _fansCount={}; // _followMap: 我關注咗邊啲人；_fansCount: user_id -> 粉絲數
+async function loadFollows(){
+ _followMap={};_fansCount={};
+ try{
+  var r=await sbk().from("follows").select("follower_id,following_id").limit(2000);
+  (r.data||[]).forEach(function(f){
+   _fansCount[f.following_id]=(_fansCount[f.following_id]||0)+1;
+   if(_user&&f.follower_id===_user.id)_followMap[f.following_id]=true;
+  });
+ }catch(e){}
+}
+async function renderFollow(){
  var h="";
- CREATORS.forEach(function(c,i){
-  h+='<div class="creator"><div class="avatar">'+c.av+'</div><div class="info"><div class="nm">'+c.n+'</div><div class="st">'+c.s+'</div></div>'
-  +'<button class="fbtn'+(c.f?" followed":"")+'" onclick="toggleF('+i+',this)">'+(c.f?"已關注":"+ 關注")+'</button></div>';
- });
+ if(_user){
+  await loadFollows();
+  var me=_user.id, myFans=_fansCount[me]||0, myFollowing=Object.keys(_followMap).length;
+  h+='<div class="followstat">我關注咗 '+myFollowing+' 人 · '+myFans+' 位粉絲</div>';
+  try{
+   var r=await sbk().from("profiles").select("id,nickname,avatar_text").neq("id",me).order("nickname").limit(100);
+   var users=r.data||[];
+   if(!users.length)h+='<div class="empty">暫時未有其他用戶<br>快啲分享俾朋友加入啦！</div>';
+   users.forEach(function(u){
+    var nm=u.nickname||"講圈用戶", av=(u.avatar_text||nm.charAt(0)||"講");
+    var fans=_fansCount[u.id]||0, f=_followMap[u.id];
+    h+='<div class="creator"><div class="avatar">'+escHtml(av)+'</div><div class="info"><div class="nm">'+escHtml(nm)+'</div><div class="st">'+fans+'位粉絲</div></div>'
+     +'<button class="fbtn'+(f?" followed":"")+'" onclick="toggleFollowDb(\''+u.id+'\',this)">'+(f?"已關注":"+ 關注")+'</button></div>';
+   });
+  }catch(e){ h+='<div class="empty">讀取失敗，請再試</div>'; }
+ }else{
+  CREATORS.forEach(function(c,i){
+   h+='<div class="creator"><div class="avatar">'+c.av+'</div><div class="info"><div class="nm">'+c.n+'</div><div class="st">'+c.s+'</div></div>'
+   +'<button class="fbtn'+(c.f?" followed":"")+'" onclick="toggleF('+i+',this)">'+(c.f?"已關注":"+ 關注")+'</button></div>';
+  });
+ }
  document.getElementById("followlist").innerHTML=h;
 }
 function toggleF(i,b){CREATORS[i].f=!CREATORS[i].f;b.classList.toggle("followed");b.textContent=CREATORS[i].f?"已關注":"+ 關注";}
-function renderArts(){
+async function toggleFollowDb(uid,b){
+ if(!_user){toast("請先登入");return;}
+ var me=_user.id, following=b.classList.contains("followed");
+ b.disabled=true;
+ try{
+  var r;
+  if(following) r=await sbk().from("follows").delete().eq("follower_id",me).eq("following_id",uid);
+  else r=await sbk().from("follows").insert({follower_id:me,following_id:uid});
+  if(r.error)throw r.error;
+  await renderFollow(); await refreshFollowStats();
+ }catch(e){ toast("操作失敗，請再試"); }
+ b.disabled=false;
+}
+async function refreshFollowStats(){
+ if(!_user)return;
+ await loadFollows();
+ var fans=_fansCount[_user.id]||0;
+ setT("st-fans",fans);setT("s-fans",fans);
+}
+async function refreshSocial(){ try{await renderFollow();}catch(e){} try{await renderArts();}catch(e){} refreshMyStats(); }
+async function renderArts(){
  var h="";
+ try{
+  var r=await sbk().from("articles").select("id,user_id,title,body,image_url,created_at").order("created_at",{ascending:false}).limit(50);
+  var arts=r.data||[];
+  if(arts.length){
+   var uids={},plist=[];
+   arts.forEach(function(a){ if(!uids[a.user_id]){uids[a.user_id]=1;plist.push(a.user_id);} });
+   var pr=await sbk().from("profiles").select("id,nickname").in("id",plist);
+   var pmap={};(pr.data||[]).forEach(function(p){pmap[p.id]=p.nickname;});
+   arts.forEach(function(a){
+    var nm=pmap[a.user_id]||"講圈用戶";
+    var d=new Date(a.created_at), ds=d.getFullYear()+"/"+(d.getMonth()+1)+"/"+d.getDate();
+    h+='<div class="acard" onclick="openArticle(\''+a.id+'\')">'
+     +(a.image_url?'<img src="'+a.image_url+'">':"")
+     +'<div class="abody"><div class="at">'+escHtml(a.title)+'</div><div class="as">'+escHtml(nm)+' · '+escHtml(String(a.body).slice(0,42))+'</div><div class="afoot"><span>'+ds+'</span><span class="more">睇詳情</span></div></div></div>';
+   });
+  }
+ }catch(e){}
  ARTICLES.forEach(function(a,i){
   h+='<div class="acard" '+(a.detail?'onclick="go(\'s-artdetail\')"':"")+'><img src="'+a.img+'"><div class="abody"><div class="at">'+a.t+'</div><div class="as">'+a.s+'</div><div class="afoot"><span>'+a.d+'</span><span class="more">睇詳情</span></div></div></div>';
   if(i===1) h+='<div class="acard adslot"><div class="adph">📢 廣告預留位<div class="adsub">正式版可接 Google AdSense／Pangle</div></div></div>';
  });
  document.getElementById("artlist").innerHTML=h;
+}
+var _artImgFile=null, _openArtId=null;
+function goWrite(){
+ if(!_user){toast("請先登入");go("s-profile");return;}
+ document.getElementById("art-title").value="";
+ document.getElementById("art-body").value="";
+ document.getElementById("art-img").value="";
+ _artImgFile=null;
+ var p=document.getElementById("art-imgprev");p.src="";p.style.display="none";
+ go("s-artwrite");
+}
+function previewArtImg(inp){
+ var f=inp.files[0];if(!f)return;
+ if(f.size>5*1024*1024){toast("圖片太大，請揀 5MB 以內");inp.value="";return;}
+ _artImgFile=f;
+ var rd=new FileReader();
+ rd.onload=function(e){var p=document.getElementById("art-imgprev");p.src=e.target.result;p.style.display="block";};
+ rd.readAsDataURL(f);
+}
+async function publishArticle(){
+ if(!_user){toast("請先登入");return;}
+ var t=document.getElementById("art-title").value.trim();
+ var b=document.getElementById("art-body").value.trim();
+ if(!t){toast("請填標題");return;}
+ if(!b){toast("請填內文");return;}
+ var btn=document.getElementById("art-pubbtn");btn.disabled=true;btn.textContent="發佈中…";
+ try{
+  var imgUrl=null;
+  if(_artImgFile){
+   var ext=(_artImgFile.name.split(".").pop()||"jpg").toLowerCase().replace(/[^a-z0-9]/g,"").slice(0,4)||"jpg";
+   var path=_user.id+"/"+Date.now()+"."+ext;
+   var up=await _sb.storage.from("ktalk-images").upload(path,_artImgFile,{contentType:_artImgFile.type});
+   if(up.error)throw up.error;
+   imgUrl=_sb.storage.from("ktalk-images").getPublicUrl(path).data.publicUrl;
+  }
+  var ins=await sbk().from("articles").insert({user_id:_user.id,title:t,body:b,image_url:imgUrl});
+  if(ins.error)throw ins.error;
+  toast("發佈成功！");go("s-articles");await renderArts();
+ }catch(e){toast("發佈失敗，請再試");}
+ btn.disabled=false;btn.textContent="發佈";
+}
+async function openArticle(id){
+ var r=await sbk().from("articles").select("id,user_id,title,body,image_url,created_at").eq("id",id).single();
+ if(r.error||!r.data){toast("讀取失敗");return;}
+ var a=r.data, nm="講圈用戶";
+ try{var pr=await sbk().from("profiles").select("nickname").eq("id",a.user_id).single();if(pr.data&&pr.data.nickname)nm=pr.data.nickname;}catch(e){}
+ var d=new Date(a.created_at);
+ var mine=_user&&a.user_id===_user.id;
+ _openArtId=id;
+ var paras=escHtml(a.body).split("\n").map(function(p){return p.trim()?'<p class="body">'+p.trim()+"</p>":"";}).join("");
+ document.getElementById("myartbox").innerHTML=
+  '<div style="position:relative;background:#fff"><button class="backbtn" onclick="go(\'s-articles\')">‹</button><div class="topbar" style="border:none">講圈</div></div>'
+  +'<div class="art"><h1>'+escHtml(a.title)+'</h1><div class="meta">'+escHtml(nm)+' <span class="dt">'+d.toLocaleString("zh-HK")+'</span></div>'
+  +(a.image_url?'<img class="body" src="'+a.image_url+'" alt="">':"")
+  +paras
+  +(mine?'<button class="delartbtn" onclick="delArticle()">🗑 刪除呢篇文章</button>':"")
+  +'</div>';
+ go("s-myart");
+}
+async function delArticle(){
+ if(!_openArtId||!confirm("確定刪除呢篇文章？"))return;
+ try{
+  var cur=document.querySelector("#myartbox img.body");
+  var r=await sbk().from("articles").delete().eq("id",_openArtId);
+  if(r.error)throw r.error;
+  if(cur&&cur.src&&cur.src.indexOf("ktalk-images")>0){
+   try{var p=cur.src.split("ktalk-images/")[1].split("?")[0];await _sb.storage.from("ktalk-images").remove([decodeURIComponent(p)]);}catch(e){}
+  }
+ }catch(e){toast("刪除失敗");return;}
+ _openArtId=null;go("s-articles");await renderArts();toast("已刪除");
 }
 var _myWorks=[];
 function renderWorks(){
@@ -714,7 +882,8 @@ function refreshMyStats(){
  var sh=demo?shares:(shares-_shareBase);
  setT("wcount",my.length);
  setT("st-plays",pl);setT("s-plays",pl);
- setT("st-fans",demo?3:0);setT("s-fans",demo?3:0);
+ setT("st-fans",demo?3:"…");setT("s-fans",demo?3:"…");
+ if(!demo)refreshFollowStats();
  setT("st-follows",demo?4:0);
  setT("s-favs",demo?1:0);
  setT("s-shares",sh);
@@ -992,7 +1161,7 @@ try{
   if(s&&s.uid) VIDEOS.unshift({t:s.t||"我嘅新短片",p:"0次播放",d:"--:--",a:s.a||"講圈用戶",av:s.av||"講",uid:s.uid,mine:true,stream:true});
  });
 }catch(e){}
-renderFeed();renderFollow();renderArts();renderWorks();
+renderFeed();renderWorks();refreshSocial();
 applyProfile();applySettings();initEditForm();
 if(document.getElementById("s-home").classList.contains("active")){var _tb0=document.querySelector(".topbar");if(_tb0)_tb0.style.display="none";}
 chart("c1",[3,0,9,0,0,0,0],"#07c160");
@@ -1075,7 +1244,7 @@ async function phoneAuth(){
   await loadSbProfile();
   fillEditForm();renderAuthArea();
   try{await loadCommunity();}catch(e){}
-  refreshMyStats();
+  refreshSocial();
   go("s-profile");
  }catch(e){
   toast("失敗："+((e&&e.message)||"請再試"));
@@ -1118,7 +1287,7 @@ async function doAuth(){
   fillEditForm();
   renderAuthArea();
   try{await loadCommunity();}catch(e){}
-  refreshMyStats();
+  refreshSocial();
   go("s-profile");
  }catch(e){
   var m=(e&&e.message)||"請再試";
@@ -1145,7 +1314,7 @@ async function doLogout(){
  _profile={name:"講圈用戶",bio:"",gender:"",age:"",tags:[]};
  try{var _p=JSON.parse(localStorage.getItem("kongtalk_profile")||"null");if(_p)_profile=_p;}catch(e){}
  VIDEOS.forEach(function(v){v.mine=false;});
- applyProfile();renderAuthArea();fillEditForm();refreshMyStats();toast("已登出");
+ applyProfile();renderAuthArea();fillEditForm();refreshSocial();toast("已登出");
 }
 function renderAuthArea(){
  var el=document.getElementById("auth-area");if(!el)return;
@@ -1191,7 +1360,7 @@ async function loadCommunity(){
  }catch(e){}
  renderAuthArea();
  await loadCommunity();
- refreshMyStats();
+ refreshSocial();
 })();
 
 /* 分享 deep link：#v=stream_uid（新短連結）或 #v=片名（舊連結，兼容）→ 自動碌去嗰條片並播放；#u= → 去「我」頁 */
