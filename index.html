@@ -211,6 +211,17 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 /* ---------- toast ---------- */
 #toast{position:fixed;left:50%;bottom:90px;transform:translateX(-50%) translateY(20px);background:rgba(0,0,0,.85);color:#fff;padding:12px 20px;border-radius:24px;font-size:14px;z-index:200;opacity:0;transition:all .25s;pointer-events:none;max-width:86%;text-align:center}
 #toast.show{opacity:1;transform:translateX(-50%) translateY(0)}
+.cfmask{position:fixed;inset:0;background:rgba(0,0,0,.45);display:none;align-items:center;justify-content:center;z-index:300}
+.cfmask.show{display:flex}
+.cfbox{background:#fff;border-radius:14px;padding:22px;width:78%;max-width:320px;text-align:center}
+.cft{font-size:16px;margin-bottom:18px;line-height:1.6}
+.cfbtns{display:flex;gap:10px}
+.cfbtn{flex:1;border:1px solid #ddd;background:#f5f5f5;border-radius:10px;padding:10px;font-size:15px}
+.cfbtn.danger{background:#e64343;border-color:#e64343;color:#fff;font-weight:700}
+.pubartbtn.ghost{background:#f2f2f2;color:#333;font-weight:400;margin-left:8px}
+.pubartbtn.ghost.on{background:#07c160;color:#fff;font-weight:700}
+.filehidden{position:absolute;opacity:0;width:1px;height:1px;overflow:hidden;pointer-events:none}
+.aimgbtn{position:relative}
 /* ---------- 關注＋好文發佈 ---------- */
 .arttop{padding:12px 14px 4px;display:flex;justify-content:flex-end}
 .pubartbtn{background:#07c160;color:#fff;border:none;border-radius:20px;padding:8px 18px;font-size:14px;font-weight:700}
@@ -265,7 +276,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 
 <!-- ============ 美文 ============ -->
 <div class="screen" id="s-articles">
-  <div class="arttop"><button class="pubartbtn" onclick="goWrite()">✍️ 寫文章</button></div>
+  <div class="arttop"><button class="pubartbtn" onclick="goWrite()">✍️ 寫文章</button><button class="pubartbtn ghost" id="myartbtn" style="display:none" onclick="toggleMyArts(this)">我發佈的</button></div>
   <div id="artlist"></div>
 </div>
 
@@ -279,7 +290,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
   <textarea id="art-body" class="abody-input" placeholder="寫低你想講嘅嘢…"></textarea>
   <div class="aimgrow">
     <img id="art-imgprev">
-    <label class="aimgbtn">📷 加圖片<input type="file" id="art-img" accept="image/*" style="display:none" onchange="previewArtImg(this)"></label>
+    <label class="aimgbtn">📷 加圖片<input type="file" id="art-img" accept="image/*" class="filehidden" onchange="previewArtImg(this)"></label>
   </div>
   <div style="padding:0 14px 30px"><button class="pubbtn" id="art-pubbtn" onclick="publishArticle()" style="width:100%">發佈</button></div>
 </div>
@@ -568,6 +579,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
   <button class="cancelbtn" onclick="closeWx()">關閉</button>
 </div>
 <div id="toast"></div>
+<div class="cfmask" id="cfmask"><div class="cfbox"><div class="cft" id="cft"></div><div class="cfbtns"><button class="cfbtn" id="cfcancel">取消</button><button class="cfbtn danger" id="cfok">確定</button></div></div></div>
 
 <script>
 var VIDEOS=[
@@ -725,11 +737,21 @@ async function refreshFollowStats(){
  setT("st-fans",fans);setT("s-fans",fans);
 }
 async function refreshSocial(){ try{await renderFollow();}catch(e){} try{await renderArts();}catch(e){} refreshMyStats(); }
+var _myArtsOnly=false;
+function toggleMyArts(b){
+ _myArtsOnly=!_myArtsOnly;
+ b.classList.toggle("on",_myArtsOnly);
+ b.textContent=_myArtsOnly?"全部文章":"我發佈的";
+ renderArts();
+}
 async function renderArts(){
  var h="";
+ var mab=document.getElementById("myartbtn");
+ if(mab){ if(!_user&&_myArtsOnly){_myArtsOnly=false;} mab.style.display=_user?"":"none"; if(_myArtsOnly&&!mab.classList.contains("on")){mab.classList.add("on");mab.textContent="全部文章";} if(!_myArtsOnly&&mab.classList.contains("on")){mab.classList.remove("on");mab.textContent="我發佈的";} }
  try{
   var r=await sbk().from("articles").select("id,user_id,title,body,image_url,created_at").order("created_at",{ascending:false}).limit(50);
   var arts=r.data||[];
+  if(_myArtsOnly&&_user)arts=arts.filter(function(a){return a.user_id===_user.id;});
   if(arts.length){
    var uids={},plist=[];
    arts.forEach(function(a){ if(!uids[a.user_id]){uids[a.user_id]=1;plist.push(a.user_id);} });
@@ -809,7 +831,10 @@ async function openArticle(id){
  go("s-myart");
 }
 async function delArticle(){
- if(!_openArtId||!confirm("確定刪除呢篇文章？"))return;
+ if(!_openArtId)return;
+ customConfirm("確定刪除呢篇文章？","刪除",doDelArticle);
+}
+async function doDelArticle(){
  try{
   var cur=document.querySelector("#myartbox img.body");
   var r=await sbk().from("articles").delete().eq("id",_openArtId);
@@ -979,6 +1004,15 @@ function toast(msg){
  t.textContent=msg;t.classList.add("show");
  clearTimeout(t._h);t._h=setTimeout(function(){t.classList.remove("show");},2200);
 }
+var _cfOk=null;
+function customConfirm(msg,okLabel,cb){
+ document.getElementById("cft").textContent=msg;
+ document.getElementById("cfok").textContent=okLabel||"確定";
+ _cfOk=cb;
+ document.getElementById("cfmask").classList.add("show");
+}
+document.getElementById("cfcancel").onclick=function(){document.getElementById("cfmask").classList.remove("show");_cfOk=null;};
+document.getElementById("cfok").onclick=function(){document.getElementById("cfmask").classList.remove("show");var f=_cfOk;_cfOk=null;if(f)f();};
 /* 上传：Cloudflare Stream 直傳（direct upload）+ 本地 fallback */
 var _pendingFile=null,_streamUid=null;
 function pickFile(mode){
