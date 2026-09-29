@@ -3,8 +3,9 @@
 // 真人撳入嚟會見到 landing 頁：縮圖＋標題＋「去講圈睇片」掣，
 // 若分享者開咗「分享時附上主頁連結」，會多個「睇埋我其他片」掣。
 // 兩種用法：
-//   短連結（新）：GET /api/share-card?v=<stream_uid>&others=1|0
-//     後端自動查 ktalk.videos 攞標題同作者，縮圖同 mp4 由 uid 推算，連結好短。
+//   短連結（新）：GET /api/share-card?v=<stream_uid|dN>&others=1|0
+//     真實上傳片（32 位 uid）後端自動查 ktalk.videos 攞標題同作者；
+//     demo 片（d1–d7）用內置資料還原。縮圖同 mp4 由 key 推算，連結好短。
 //   舊參數（兼容以前分享出去嘅長連結）：GET /api/share-card?t=<標題>&img=<縮圖URL>&p=<播放數>&vsrc=<mp4>&others=1|0
 const SB_URL = "https://fksifariaiivtxsahaot.supabase.co";
 const SB_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZrc2lmYXJpYWlpdnR4c2FoYW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MzUzMDEsImV4cCI6MjEwNjExMTMwMX0.oqG3o2q0TsTLj76asJl3-b3tV4v3umrPjiChBah1iNE";
@@ -16,10 +17,23 @@ function piaohaoOf(id) {
   return (String(h1).padStart(10, "0") + String(h2).padStart(10, "0")).slice(0, 12);
 }
 
+// Demo 短片資料（同 index.html VIDEOS 頭 7 條一致，供 ?v=dN 短連結還原標題/縮圖用）
+var DEMO = {
+  d1: { t: "各位退休嘅老友，聽我講！", p: "100000+次播放", av: "樂", src: "https://samplelib.com/mp4/sample-30s.mp4" },
+  d2: { t: "🌹🌹今日9月28號，祝家人朋友身體健康，萬事如意！", p: "50983次播放", av: "細", src: "https://samplelib.com/mp4/sample-15s.mp4" },
+  d3: { t: "🔥哇！勁！大開眼界！", p: "32871次播放", av: "開", src: "https://samplelib.com/mp4/sample-20s.mp4" },
+  d4: { t: "八段錦教學：每日十分鐘，越練越後生", p: "45210次播放", av: "健", src: "https://samplelib.com/mp4/sample-10s.mp4" },
+  d5: { t: "粵曲名段欣賞：經典重溫", p: "28754次播放", av: "梨", src: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" },
+  d6: { t: "《蝶变》：徐克最癫狂的处女作，改写香港武侠片规则！", p: "9次播放", av: "孔", src: "https://samplelib.com/mp4/sample-5s.mp4" },
+  d7: { t: "圣方济各大学毕业作品展 2026 DESIGN WEEK", p: "8次播放", av: "孔", src: "https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4" }
+};
+
 module.exports = async (req, res) => {
   var q = req.query || {};
   var others = String(q.others === undefined ? "1" : q.others) !== "0";
-  var uid = /^[a-f0-9]{32}$/i.test(String(q.v || "")) ? String(q.v) : "";
+  var vkey = String(q.v || "");
+  var uid = /^[a-f0-9]{32}$/i.test(vkey) ? vkey : "";
+  var demo = DEMO[vkey] || null;
 
   var t = String(q.t || "講圈短片").slice(0, 60);
   var img = String(q.img || "");
@@ -27,8 +41,13 @@ module.exports = async (req, res) => {
   var vsrc = String(q.vsrc || "");
   var ownerPiao = "84a113104747"; // demo 影片 fallback
 
-  if (uid) {
-    // 短連結模式：後端查片，唔使將所有參數塞入 URL
+  if (demo) {
+    // demo 短片短連結：用內置資料還原（縮圖算法同前端 videoThumb() 一致）
+    t = demo.t; p = demo.p;
+    img = "https://picsum.photos/seed/" + encodeURIComponent(demo.av + demo.t.length) + "/800/450";
+    vsrc = demo.src;
+  } else if (uid) {
+    // 真實上傳片短連結：後端查 ktalk.videos 攞標題同作者，唔使將所有參數塞入 URL
     try {
       var r = await fetch(SB_URL + "/rest/v1/videos?stream_uid=eq." + uid + "&select=title,user_id&limit=1", {
         headers: { apikey: SB_ANON, "Accept-Profile": "ktalk" }
@@ -58,7 +77,7 @@ module.exports = async (req, res) => {
       '<meta property="og:video:width" content="400">' +
       '<meta property="og:video:height" content="700">'
     : "";
-  var deeplink = uid ? "https://ktalk.hk/#v=" + uid : "https://ktalk.hk/#v=" + encodeURIComponent(t);
+  var deeplink = (uid || demo) ? "https://ktalk.hk/#v=" + vkey : "https://ktalk.hk/#v=" + encodeURIComponent(t);
   var btn =
     '<a href="' + deeplink + '" style="display:block;text-align:center;background:#07c160;color:#fff;' +
     'border-radius:28px;padding:14px;margin-top:18px;text-decoration:none;font-size:16px;font-weight:700">▶ 去講圈睇呢條片</a>';

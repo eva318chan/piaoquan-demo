@@ -538,13 +538,13 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 
 <script>
 var VIDEOS=[
- {t:"各位退休嘅老友，聽我講！",p:"100000+次播放",d:"00:30",a:"音樂閣嘅野馬",av:"樂",src:"https://samplelib.com/mp4/sample-30s.mp4"},
- {t:"🌹🌹今日9月28號，祝家人朋友身體健康，萬事如意！",p:"50983次播放",d:"00:15",a:"細味歲月",av:"細",src:"https://samplelib.com/mp4/sample-15s.mp4"},
- {t:"🔥哇！勁！大開眼界！",p:"32871次播放",d:"00:20",a:"開心每一天",av:"開",src:"https://samplelib.com/mp4/sample-20s.mp4"},
- {t:"八段錦教學：每日十分鐘，越練越後生",p:"45210次播放",d:"00:10",a:"健康養生堂",av:"健",src:"https://samplelib.com/mp4/sample-10s.mp4"},
- {t:"粵曲名段欣賞：經典重溫",p:"28754次播放",d:"00:05",a:"梨園春色",av:"梨",src:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"},
- {t:"《蝶变》：徐克最癫狂的处女作，改写香港武侠片规则！",p:"9次播放",d:"00:05",a:"香港 - 孔令江 Eddie",av:"孔",src:"https://samplelib.com/mp4/sample-5s.mp4",demo:true},
- {t:"圣方济各大学毕业作品展 2026 DESIGN WEEK",p:"8次播放",d:"00:05",a:"香港 - 孔令江 Eddie",av:"孔",src:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",demo:true}
+ {id:"d1",t:"各位退休嘅老友，聽我講！",p:"100000+次播放",d:"00:30",a:"音樂閣嘅野馬",av:"樂",src:"https://samplelib.com/mp4/sample-30s.mp4"},
+ {id:"d2",t:"🌹🌹今日9月28號，祝家人朋友身體健康，萬事如意！",p:"50983次播放",d:"00:15",a:"細味歲月",av:"細",src:"https://samplelib.com/mp4/sample-15s.mp4"},
+ {id:"d3",t:"🔥哇！勁！大開眼界！",p:"32871次播放",d:"00:20",a:"開心每一天",av:"開",src:"https://samplelib.com/mp4/sample-20s.mp4"},
+ {id:"d4",t:"八段錦教學：每日十分鐘，越練越後生",p:"45210次播放",d:"00:10",a:"健康養生堂",av:"健",src:"https://samplelib.com/mp4/sample-10s.mp4"},
+ {id:"d5",t:"粵曲名段欣賞：經典重溫",p:"28754次播放",d:"00:05",a:"梨園春色",av:"梨",src:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4"},
+ {id:"d6",t:"《蝶变》：徐克最癫狂的处女作，改写香港武侠片规则！",p:"9次播放",d:"00:05",a:"香港 - 孔令江 Eddie",av:"孔",src:"https://samplelib.com/mp4/sample-5s.mp4",demo:true},
+ {id:"d7",t:"圣方济各大学毕业作品展 2026 DESIGN WEEK",p:"8次播放",d:"00:05",a:"香港 - 孔令江 Eddie",av:"孔",src:"https://interactive-examples.mdn.mozilla.net/media/cc0-videos/flower.mp4",demo:true}
 ];
 var ARTICLES=[
  {t:"中國最長最險峻嘅峽谷",s:"中國最長最險峻嘅峽谷，猶如世外桃源",d:"2026/06/26",img:"https://picsum.photos/seed/canyon/800/450",detail:true},
@@ -741,9 +741,10 @@ function openShareV(i){
  var v=VIDEOS[i];if(!v)return;
  _shareTitle=v.t||"講圈短片";
  var url;
- if(v.stream&&v.uid){
-  // 短連結：後端用 uid 查返標題/縮圖/作者，唔使將成串參數塞入 URL
-  url=location.origin+"/api/share-card?v="+v.uid;
+ var sid=(v.stream&&v.uid)?v.uid:(v.id||"");
+ if(sid){
+  // 短連結：後端用 sid 查返標題/縮圖/作者，唔使將成串參數塞入 URL
+  url=location.origin+"/api/share-card?v="+sid;
  }else{
   var vsrc0=v.src||"";
   url=location.origin+"/api/share-card?t="+encodeURIComponent(_shareTitle)
@@ -1200,7 +1201,7 @@ async function loadCommunity(){
   var mv=h.match(/#v=([^&]+)/);
   if(mv){
    var key=decodeURIComponent(mv[1]),idx=-1;
-   for(var i=0;i<VIDEOS.length;i++){if(VIDEOS[i].uid&&VIDEOS[i].uid===key){idx=i;break;}}
+   for(var i=0;i<VIDEOS.length;i++){if((VIDEOS[i].uid&&VIDEOS[i].uid===key)||(VIDEOS[i].id&&VIDEOS[i].id===key)){idx=i;break;}}
    if(idx<0){for(var i=0;i<VIDEOS.length;i++){if(VIDEOS[i].t===key){idx=i;break;}}}
    if(idx>=0){
     go("s-home",document.querySelectorAll(".tab")[0]);
