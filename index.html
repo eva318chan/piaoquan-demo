@@ -740,12 +740,18 @@ var _shareTitle="";
 function openShareV(i){
  var v=VIDEOS[i];if(!v)return;
  _shareTitle=v.t||"講圈短片";
- var vsrc=(v.stream&&v.uid)?("https://videodelivery.net/"+v.uid+"/downloads/default.mp4"):(v.src||"");
- var url=location.origin+"/api/share-card?t="+encodeURIComponent(_shareTitle)
-  +"&img="+encodeURIComponent(videoThumb(v))
-  +"&p="+encodeURIComponent(v.p||"")
-  +"&vsrc="+encodeURIComponent(vsrc)
-  +"&others="+((_settings.shareOthers)?"1":"0");
+ var url;
+ if(v.stream&&v.uid){
+  // 短連結：後端用 uid 查返標題/縮圖/作者，唔使將成串參數塞入 URL
+  url=location.origin+"/api/share-card?v="+v.uid;
+ }else{
+  var vsrc0=v.src||"";
+  url=location.origin+"/api/share-card?t="+encodeURIComponent(_shareTitle)
+   +"&img="+encodeURIComponent(videoThumb(v))
+   +"&p="+encodeURIComponent(v.p||"")
+   +"&vsrc="+encodeURIComponent(vsrc0);
+ }
+ url+="&others="+((_settings.shareOthers)?"1":"0");
  document.getElementById("sharelink").value=url;
  document.getElementById("mask").classList.add("show");
  document.getElementById("sheet").classList.add("show");
@@ -1187,14 +1193,15 @@ async function loadCommunity(){
  refreshMyStats();
 })();
 
-/* 分享 deep link：#v=片名 → 自動碌去嗰條片並播放；#u= → 去「我」頁 */
+/* 分享 deep link：#v=stream_uid（新短連結）或 #v=片名（舊連結，兼容）→ 自動碌去嗰條片並播放；#u= → 去「我」頁 */
 (function(){
  try{
   var h=location.hash||"";
   var mv=h.match(/#v=([^&]+)/);
   if(mv){
-   var title=decodeURIComponent(mv[1]),idx=-1;
-   for(var i=0;i<VIDEOS.length;i++){if(VIDEOS[i].t===title){idx=i;break;}}
+   var key=decodeURIComponent(mv[1]),idx=-1;
+   for(var i=0;i<VIDEOS.length;i++){if(VIDEOS[i].uid&&VIDEOS[i].uid===key){idx=i;break;}}
+   if(idx<0){for(var i=0;i<VIDEOS.length;i++){if(VIDEOS[i].t===key){idx=i;break;}}}
    if(idx>=0){
     go("s-home",document.querySelectorAll(".tab")[0]);
     setTimeout(function(){

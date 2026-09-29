@@ -2,15 +2,47 @@
 // 微信 / WhatsApp / Facebook 嘅爬蟲會讀呢頁嘅 og 標籤，顯示「標題＋影片縮圖」卡片；
 // 真人撳入嚟會見到 landing 頁：縮圖＋標題＋「去講圈睇片」掣，
 // 若分享者開咗「分享時附上主頁連結」，會多個「睇埋我其他片」掣。
-//   GET /api/share-card?t=<標題>&img=<縮圖URL>&p=<播放數>&others=1|0
-module.exports = (req, res) => {
+// 兩種用法：
+//   短連結（新）：GET /api/share-card?v=<stream_uid>&others=1|0
+//     後端自動查 ktalk.videos 攞標題同作者，縮圖同 mp4 由 uid 推算，連結好短。
+//   舊參數（兼容以前分享出去嘅長連結）：GET /api/share-card?t=<標題>&img=<縮圖URL>&p=<播放數>&vsrc=<mp4>&others=1|0
+const SB_URL = "https://fksifariaiivtxsahaot.supabase.co";
+const SB_ANON = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImZrc2lmYXJpYWlpdnR4c2FoYW90Iiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTA1MzUzMDEsImV4cCI6MjEwNjExMTMwMX0.oqG3o2q0TsTLj76asJl3-b3tV4v3umrPjiChBah1iNE";
+
+// 講圈號：同前端 memberPiaohao() 同一個算法（user.id → 12 位數字）
+function piaohaoOf(id) {
+  var h1 = 0, h2 = 0;
+  for (var i = 0; i < id.length; i++) { var c = id.charCodeAt(i); h1 = ((h1 * 31) + c) >>> 0; h2 = ((h2 * 37) + c + i) >>> 0; }
+  return (String(h1).padStart(10, "0") + String(h2).padStart(10, "0")).slice(0, 12);
+}
+
+module.exports = async (req, res) => {
   var q = req.query || {};
+  var others = String(q.others === undefined ? "1" : q.others) !== "0";
+  var uid = /^[a-f0-9]{32}$/i.test(String(q.v || "")) ? String(q.v) : "";
+
   var t = String(q.t || "講圈短片").slice(0, 60);
   var img = String(q.img || "");
   var p = String(q.p || "").slice(0, 30);
-  var others = String(q.others === undefined ? "1" : q.others) !== "0";
-  // 直接 mp4 連結（有先會加 og:video，Facebook 先會內嵌播放條片）
   var vsrc = String(q.vsrc || "");
+  var ownerPiao = "84a113104747"; // demo 影片 fallback
+
+  if (uid) {
+    // 短連結模式：後端查片，唔使將所有參數塞入 URL
+    try {
+      var r = await fetch(SB_URL + "/rest/v1/videos?stream_uid=eq." + uid + "&select=title,user_id&limit=1", {
+        headers: { apikey: SB_ANON, "Accept-Profile": "ktalk" }
+      });
+      var rows = await r.json();
+      if (rows && rows.length) {
+        if (rows[0].title) t = String(rows[0].title).slice(0, 60);
+        if (rows[0].user_id) ownerPiao = piaohaoOf(String(rows[0].user_id));
+      }
+    } catch (e) { /* 查唔到就用參數/fallback，卡照出 */ }
+    img = "https://videodelivery.net/" + uid + "/thumbnails/thumbnail.jpg";
+    vsrc = "https://videodelivery.net/" + uid + "/downloads/default.mp4";
+  }
+  // 直接 mp4 連結（有先會加 og:video，Facebook 先會內嵌播放條片）
   if (!/^https:\/\//i.test(vsrc)) vsrc = "";
   // 只接受 https 圖片，防 XSS / open redirect
   if (!/^https:\/\//i.test(img)) img = "https://picsum.photos/seed/kongtalk/800/450";
@@ -26,13 +58,13 @@ module.exports = (req, res) => {
       '<meta property="og:video:width" content="400">' +
       '<meta property="og:video:height" content="700">'
     : "";
-  var deeplink = "https://ktalk.hk/#v=" + encodeURIComponent(t);
+  var deeplink = uid ? "https://ktalk.hk/#v=" + uid : "https://ktalk.hk/#v=" + encodeURIComponent(t);
   var btn =
     '<a href="' + deeplink + '" style="display:block;text-align:center;background:#07c160;color:#fff;' +
     'border-radius:28px;padding:14px;margin-top:18px;text-decoration:none;font-size:16px;font-weight:700">▶ 去講圈睇呢條片</a>';
   if (others) {
     btn +=
-      '<a href="https://ktalk.hk/#u=84a113104747" style="display:block;text-align:center;background:#fff;color:#07c160;' +
+      '<a href="https://ktalk.hk/#u=' + ownerPiao + '" style="display:block;text-align:center;background:#fff;color:#07c160;' +
       'border:1px solid #07c160;border-radius:28px;padding:14px;margin-top:12px;text-decoration:none;font-size:16px;font-weight:700">睇埋我其他片</a>';
   }
   var html =
