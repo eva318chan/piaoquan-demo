@@ -126,6 +126,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .work .thumb img{width:100%;height:100%;object-fit:cover}
 .work .thumb .dur{position:absolute;right:6px;bottom:6px;background:rgba(0,0,0,.6);color:#fff;font-size:11px;padding:2px 6px;border-radius:4px}
 .work .thumb .pbtn{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:40px;height:40px;border-radius:50%;background:rgba(0,0,0,.45);color:#fff;display:flex;align-items:center;justify-content:center;font-size:15px;pointer-events:none}
+.work .thumb .delbtn{position:absolute;right:6px;top:6px;width:32px;height:32px;border-radius:50%;background:rgba(0,0,0,.55);color:#fff;border:none;font-size:15px;display:flex;align-items:center;justify-content:center}
 .work .wt{font-size:13px;padding:8px;line-height:1.4;height:52px;overflow:hidden}
 .menu{background:#fff;margin-top:10px}
 .mi{display:flex;align-items:center;padding:15px 18px;font-size:16px;border-bottom:1px solid #f5f5f5}
@@ -654,7 +655,8 @@ function renderWorks(){
  _myWorks=myVideos();
  _myWorks.forEach(function(v,i){
   var thumb=(v.stream&&v.uid)?streamThumb(v.uid):("https://picsum.photos/seed/"+encodeURIComponent(v.av+v.t.length)+"/400/250");
-  h+='<div class="work" onclick="playWork('+i+')"><div class="thumb"><img src="'+thumb+'"><span class="pbtn">▶</span><span class="dur">'+v.d+'</span></div><div class="wt">'+v.t+'</div></div>';
+  var del=(v.uid&&v.stream&&v.mine)?'<button class="delbtn" onclick="event.stopPropagation();delVideo(\''+v.uid+'\')">🗑</button>':"";
+  h+='<div class="work" onclick="playWork('+i+')"><div class="thumb"><img src="'+thumb+'"><span class="pbtn">▶</span><span class="dur">'+v.d+'</span>'+del+'</div><div class="wt">'+v.t+'</div></div>';
  });
  document.getElementById("works").innerHTML=h;
  refreshMyStats();
@@ -669,6 +671,30 @@ function playWork(i){
   var els=document.querySelectorAll("#feed .vcard .vwrap");
   if(els[idx]){els[idx].scrollIntoView({block:"start"});togglePlay(els[idx]);}
  },350);
+}
+/* 刪除自己上傳嘅影片：經後端驗證擁有權，一併清 Cloudflare Stream＋資料庫 */
+async function delVideo(uid){
+ var v=null;
+ for(var i=0;i<_myWorks.length;i++){if(_myWorks[i].uid===uid){v=_myWorks[i];break;}}
+ if(!_user){toast("請先登入先可以刪除影片");go("s-auth");return;}
+ if(!confirm("確定刪除「"+(v?v.t:"呢條片")+"」？\n雲端影片同記錄會一併清除，無法復原。"))return;
+ var tok=_sbToken;
+ try{var s=await _sb.auth.getSession();if(s&&s.data&&s.data.session)tok=s.data.session.access_token;}catch(e){}
+ toast("刪除緊…");
+ try{
+  var r=await fetch("/api/delete-video",{method:"POST",
+   headers:(function(){var h={"Content-Type":"application/json"};if(tok)h["x-sb-token"]=tok;return h;})(),
+   body:JSON.stringify({uid:uid})});
+  var d=await r.json().catch(function(){return{};});
+  if(!r.ok||!d||!d.ok){toast((d&&d.error)||"刪除失敗，請再試");return;}
+ }catch(e){toast("刪除失敗，請檢查網絡再試");return;}
+ VIDEOS=VIDEOS.filter(function(x){return x.uid!==uid;});
+ try{
+  var saved=JSON.parse(localStorage.getItem("kongtalk_my_streams")||"[]");
+  localStorage.setItem("kongtalk_my_streams",JSON.stringify(saved.filter(function(x){return x.uid!==uid;})));
+ }catch(e){}
+ renderFeed();renderWorks();
+ toast("已刪除");
 }
 /* ---------- 會員資料隔離 ---------- */
 /* 未登入 = 演示模式（睇示範片＋示範數字）；登入會員 = 只睇自己嘅片＋真實數字 */
