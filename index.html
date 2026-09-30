@@ -1096,13 +1096,25 @@ async function publishVideo(){
  if(_streamUid){
   v={t:t,p:"0次播放",d:"--:--",a:aname,av:aav,uid:_streamUid,mine:true,stream:true};
   if(_sb&&_user){
-   /* 寫入失敗唔好再靜吞：唔加本地記錄，等用戶撳多次「出片！」重試（雲端嗰份唔使再傳） */
+   /* 寫入失敗唔好再靜吞：先 refresh session（長上傳可能令 JWT 過期，RLS 會擋 insert），失敗就重試一次 */
    try{
+    try{var rs=await _sb.auth.getSession();if(rs&&rs.data&&rs.data.session){_sbToken=rs.data.session.access_token;}}catch(e){}
     var ins=await sbk().from("videos").insert({user_id:_user.id,title:t,stream_uid:_streamUid});
     if(ins&&ins.error)throw ins.error;
    }catch(e){
-    toast("雲端上傳成功，但寫入記錄失敗——請撳多次「出片！」重試");
-    return;
+    try{console.log("[publishVideo] insert fail:",(e&&(e.code||""))+" "+(e&&(e.message||e)));}catch(_){}
+    /* 重試一次：強制 refresh token */
+    try{
+     await _sb.auth.refreshSession();
+     var rs2=await _sb.auth.getSession();if(rs2&&rs2.data&&rs2.data.session){_sbToken=rs2.data.session.access_token;}
+     var ins2=await sbk().from("videos").insert({user_id:_user.id,title:t,stream_uid:_streamUid});
+     if(ins2&&ins2.error)throw ins2.error;
+    }catch(e2){
+     try{console.log("[publishVideo] retry fail:",(e2&&(e2.code||""))+" "+(e2&&(e2.message||e2)));}catch(_){}
+     var em=(e2&&(e2.message||""))||(e&&(e.message||""))||"";
+     toast("雲端上傳成功，但寫入記錄失敗("+(em||"未知錯誤").slice(0,40)+")——請撳多次「出片！」重試");
+     return;
+    }
    }
   }
   try{
