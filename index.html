@@ -885,6 +885,15 @@ function delVideo(uid){
  if(!_user){toast("請先登入先可以刪除影片");go("s-auth");return;}
  customConfirm("確定刪除「"+(v?v.t:"呢條片")+"」？\n雲端影片同記錄會一併清除，無法復原。","刪除",function(){doDelVideo(uid);});
 }
+/* 由本機清走一條片（VIDEOS＋localStorage），並重繪 */
+function removeLocalVideo(uid){
+ VIDEOS=VIDEOS.filter(function(x){return x.uid!==uid;});
+ try{
+  var saved=JSON.parse(localStorage.getItem("kongtalk_my_streams")||"[]");
+  localStorage.setItem("kongtalk_my_streams",JSON.stringify(saved.filter(function(x){return x.uid!==uid;})));
+ }catch(e){}
+ renderFeed();renderWorks();
+}
 async function doDelVideo(uid){
  var tok=_sbToken;
  try{var s=await _sb.auth.getSession();if(s&&s.data&&s.data.session)tok=s.data.session.access_token;}catch(e){}
@@ -894,14 +903,18 @@ async function doDelVideo(uid){
    headers:(function(){var h={"Content-Type":"application/json"};if(tok)h["x-sb-token"]=tok;return h;})(),
    body:JSON.stringify({uid:uid})});
   var d=await r.json().catch(function(){return{};});
-  if(!r.ok||!d||!d.ok){toast((d&&d.error)||"刪除失敗，請再試");return;}
+  if(!r.ok||!d||!d.ok){
+   var emsg=(d&&d.error)||"";
+   /* 後端搵唔到記錄：多數係上傳嗰陣資料庫寫入靜靜失敗，變成只存喺部機嘅孤兒片——直接清走本機，唔好再彈失敗 */
+   if(r.status===403&&emsg.indexOf("搵唔到")>=0){
+    removeLocalVideo(uid);
+    toast("呢條片之前冇寫入雲端記錄，已喺你部機移除");
+    return;
+   }
+   toast(emsg||"刪除失敗，請再試");return;
+  }
  }catch(e){toast("刪除失敗，請檢查網絡再試");return;}
- VIDEOS=VIDEOS.filter(function(x){return x.uid!==uid;});
- try{
-  var saved=JSON.parse(localStorage.getItem("kongtalk_my_streams")||"[]");
-  localStorage.setItem("kongtalk_my_streams",JSON.stringify(saved.filter(function(x){return x.uid!==uid;})));
- }catch(e){}
- renderFeed();renderWorks();
+ removeLocalVideo(uid);
  toast("已刪除");
 }
 /* ---------- 會員資料隔離 ---------- */
@@ -1083,7 +1096,14 @@ async function publishVideo(){
  if(_streamUid){
   v={t:t,p:"0次播放",d:"--:--",a:aname,av:aav,uid:_streamUid,mine:true,stream:true};
   if(_sb&&_user){
-   try{await sbk().from("videos").insert({user_id:_user.id,title:t,stream_uid:_streamUid});}catch(e){}
+   /* 寫入失敗唔好再靜吞：唔加本地記錄，等用戶撳多次「出片！」重試（雲端嗰份唔使再傳） */
+   try{
+    var ins=await sbk().from("videos").insert({user_id:_user.id,title:t,stream_uid:_streamUid});
+    if(ins&&ins.error)throw ins.error;
+   }catch(e){
+    toast("雲端上傳成功，但寫入記錄失敗——請撳多次「出片！」重試");
+    return;
+   }
   }
   try{
    var saved=JSON.parse(localStorage.getItem("kongtalk_my_streams")||"[]");
