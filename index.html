@@ -1112,7 +1112,7 @@ async function publishVideo(){
     }catch(e2){
      try{console.log("[publishVideo] retry fail:",(e2&&(e2.code||""))+" "+(e2&&(e2.message||e2)));}catch(_){}
      var em=(e2&&(e2.message||""))||(e&&(e.message||""))||"";
-     toast("雲端上傳成功，但寫入記錄失敗("+(em||"未知錯誤").slice(0,40)+")——請撳多次「出片！」重試");
+     toast("雲端上傳成功，但寫入記錄失敗("+(em||"未知錯誤").slice(0,120)+")——請撳多次「出片！」重試");
      return;
     }
    }
@@ -1386,6 +1386,13 @@ async function loadSbProfile(){
    _profile.name=r.data.nickname||"講圈用戶";
    if(r.data.bio!=null)_profile.bio=r.data.bio;
    applyProfile();
+  }else{
+   /* 冇 profiles row（舊帳號註冊時寫入失敗）→ 即刻補返，否則 videos 寫入會被 FK 擋住 */
+   try{
+    var nick=(_profile.name&&_profile.name!=="講圈用戶")?_profile.name:"講圈用戶";
+    await sbk().from("profiles").upsert({id:_user.id,nickname:nick,avatar_text:(nick.trim().charAt(0)||"講")});
+    console.log("[loadSbProfile] created missing profiles row");
+   }catch(e2){console.log("[loadSbProfile] create profile fail:",e2.code,e2.message);}
   }
  }catch(e){}
 }
