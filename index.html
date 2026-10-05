@@ -646,6 +646,15 @@ function bumpPlay(v){
  _bumped[v.id||v.uid]=1;
  var n=vPlaysNum(v)+1;v.p=n+"次播放";
  try{refreshMyStats();}catch(e){}
+ try{
+  var idx=VIDEOS.indexOf(v);
+  if(idx>=0){
+   var wrap=document.querySelector('.vwrap[data-i="'+idx+'"]');
+   var card=wrap&&wrap.closest('.vcard');
+   var el=card&&card.querySelector('.vplays');
+   if(el)el.textContent=v.p;
+  }
+ }catch(e){}
  if(v.stream&&v.uid){
   try{fetch("/api/bump-play",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({uid:v.uid})}).catch(function(){});}catch(e){}
  }
