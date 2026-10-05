@@ -676,9 +676,29 @@ function playVwrap(w){
   w.insertBefore(im,w.firstChild);
  }else{
   var vd=w.querySelector("video");
-  if(vd){vd.muted=false;var pr=vd.play();if(pr&&pr.catch)pr.catch(function(){vd.muted=true;vd.play().catch(function(){});});}
+  if(vd){vd.muted=false;vd.onended=function(){playNextVideo(i);};var pr=vd.play();if(pr&&pr.catch)pr.catch(function(){vd.muted=true;vd.play().catch(function(){});});}
  }
 }
+/* 睇完自動播下一條（跳過廣告位） */
+function playNextVideo(curIdx){
+ try{
+  var cards=document.getElementById("feed").querySelectorAll(".vcard");
+  var n=curIdx+1;
+  while(n<cards.length&&cards[n].classList.contains("adslot"))n++;
+  if(n>=cards.length)return;
+  cards[n].scrollIntoView({block:"start",behavior:"smooth"});
+ }catch(e){}
+}
+/* Cloudflare Stream 播完會 postMessage 通知 */
+window.addEventListener("message",function(e){
+ try{
+  var d=typeof e.data==="string"?JSON.parse(e.data):e.data;
+  if(d&&d.event==="ended"){
+   var cur=document.querySelector(".vwrap.playing");
+   if(cur)playNextVideo(+cur.getAttribute("data-i"));
+  }
+ }catch(err){}
+});
 function togglePlay(w){
  if(w.classList.contains("playing")){w.classList.remove("playing");stopMedia(w);restoreMedia(w,VIDEOS[+w.getAttribute("data-i")]);return;}
  playVwrap(w);
