@@ -151,5 +151,19 @@ module.exports = async (req, res) => {
     }
   } catch (e) {}
 
-  res.status(200).json({ ok: true, deletedVideos: streamUids.length, errors: errors });
+  // 6. 徹底刪除 auth 用戶（需 SUPABASE_SERVICE_KEY）
+  let authDeleted = false;
+  const svcKey = process.env.SUPABASE_SERVICE_KEY;
+  if (svcKey) {
+    try {
+      const r = await fetch(SB_URL + "/auth/v1/admin/users/" + uid, {
+        method: "DELETE",
+        headers: { apikey: svcKey, Authorization: "Bearer " + svcKey }
+      });
+      authDeleted = r.ok;
+      if (!r.ok) errors.push("登入帳號刪除失敗");
+    } catch (e) { errors.push("登入帳號刪除失敗"); }
+  }
+
+  res.status(200).json({ ok: true, deletedVideos: streamUids.length, authDeleted: authDeleted, errors: errors });
 };
