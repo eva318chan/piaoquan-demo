@@ -1249,9 +1249,10 @@ function chart(id,data,color){
 /* 之前經 Stream 上傳嘅片（存喺 localStorage，demo 級持久化） */
 try{
  var _saved=JSON.parse(localStorage.getItem("kongtalk_my_streams")||"[]");
- _saved.forEach(function(s){
+ for(var _si=_saved.length-1;_si>=0;_si--){
+  var s=_saved[_si];
   if(s&&s.uid) VIDEOS.unshift({t:s.t||"我嘅新短片",p:"0次播放",d:"--:--",a:s.a||"講圈用戶",av:s.av||"講",uid:s.uid,mine:true,stream:true});
- });
+ }
 }catch(e){}
 renderFeed();renderWorks();refreshSocial();
 applyProfile();applySettings();initEditForm();
@@ -1435,17 +1436,29 @@ async function loadCommunity(){
   var pmap={};(pr.data||[]).forEach(function(p){pmap[p.id]=p.nickname;});
   var byUid={};VIDEOS.forEach(function(v){if(v.uid)byUid[v.uid]=v;});
   var me=_user&&_user.id, fresh=[];
+  var dbUids={};
   rows.forEach(function(x){
    if(!x.stream_uid)return;
+   dbUids[x.stream_uid]=1;
    var nick=pmap[x.user_id]||"講圈用戶";
    var isMine=!!me&&x.user_id===me;
    var ex=byUid[x.stream_uid];
-   if(ex){ex.mine=isMine;return;}
+   if(ex){
+    ex.mine=isMine;
+    ex.p=(x.plays||0)+"次播放";
+    ex.t=x.title||ex.t;
+    fresh.push(ex);
+    return;
+   }
    var v={t:x.title||"講圈短片",p:(x.plays||0)+"次播放",d:"--:--",a:nick,av:(nick.charAt(0)||"講"),uid:x.stream_uid,stream:true,community:true};
    if(isMine)v.mine=true;
    fresh.push(v);byUid[x.stream_uid]=v;
   });
-  if(fresh.length){VIDEOS=fresh.concat(VIDEOS);}
+  /* 將 DB 有嘅片由舊位置抽起，按 DB 時間（新到舊）排返去最頂 */
+  if(fresh.length){
+   VIDEOS=VIDEOS.filter(function(v){return !(v.uid&&dbUids[v.uid]);});
+   VIDEOS=fresh.concat(VIDEOS);
+  }
   renderFeed();renderWorks();
  }catch(e){}
 }
