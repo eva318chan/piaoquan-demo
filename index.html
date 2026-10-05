@@ -219,6 +219,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .cfbtns{display:flex;gap:10px}
 .cfbtn{flex:1;border:1px solid #ddd;background:#f5f5f5;border-radius:10px;padding:10px;font-size:15px}
 .cfbtn.danger{background:#e64343;border-color:#e64343;color:#fff;font-weight:700}
+.mi.danger{color:#e64343}
+.delwarn{font-size:14px;color:#666;text-align:left;line-height:1.7;margin-bottom:12px}
+.delpw{width:100%;box-sizing:border-box;border:1px solid #ddd;border-radius:10px;padding:12px;font-size:16px;text-align:center;letter-spacing:4px;margin-bottom:16px;outline:none}
+.delpw:focus{border-color:#e64343}
 .pubartbtn.ghost{background:#f2f2f2;color:#333;font-weight:400;margin-left:8px}
 .pubartbtn.ghost.on{background:#07c160;color:#fff;font-weight:700}
 .filehidden{position:absolute;opacity:0;width:1px;height:1px;overflow:hidden;pointer-events:none}
@@ -581,6 +585,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 </div>
 <div id="toast"></div>
 <div class="cfmask" id="cfmask"><div class="cfbox"><div class="cft" id="cft"></div><div class="cfbtns"><button class="cfbtn" id="cfcancel">取消</button><button class="cfbtn danger" id="cfok">確定</button></div></div></div>
+<div class="cfmask" id="delmask"><div class="cfbox"><div class="cft">刪除帳號確認</div><div class="delwarn">⚠️ 以下資料將永久刪除，無法復原：<br>· 你上傳嘅所有影片（雲端原片＋記錄）<br>· 你發表嘅文章同圖片<br>· 個人資料、關注／粉絲關係<br><br>請輸入登入密碼確認：</div><input type="password" id="delpw" class="delpw" placeholder="輸入6位數字密碼" maxlength="32" inputmode="numeric"><div class="cfbtns"><button class="cfbtn" id="delcancel">取消</button><button class="cfbtn danger" id="delok">確認刪除</button></div></div></div>
 
 <script>
 var VIDEOS=[
@@ -1437,11 +1442,51 @@ async function doLogout(){
  VIDEOS.forEach(function(v){v.mine=false;});
  applyProfile();renderAuthArea();fillEditForm();refreshSocial();toast("已登出");
 }
+/* 刪除帳號：兩步確認（警告 → 密碼） */
+function askDeleteAccount(){
+ if(!_user){toast("請先登入");return;}
+ customConfirm("確定要刪除帳號？\n\n你上傳嘅影片、發表嘅文章、個人資料會全部永久刪除，無法復原！","繼續刪除",function(){
+  document.getElementById("delpw").value="";
+  document.getElementById("delmask").classList.add("show");
+  setTimeout(function(){document.getElementById("delpw").focus();},300);
+ });
+}
+document.getElementById("delcancel").onclick=function(){
+ document.getElementById("delmask").classList.remove("show");
+};
+document.getElementById("delok").onclick=function(){
+ var pw=document.getElementById("delpw").value.trim();
+ if(!pw){toast("請輸入密碼");return;}
+ document.getElementById("delmask").classList.remove("show");
+ doDeleteAccount(pw);
+};
+async function doDeleteAccount(password){
+ toast("刪除緊帳號…");
+ try{
+  var headers={"Content-Type":"application/json"};
+  if(_sbToken)headers["x-sb-token"]=_sbToken;
+  var r=await fetch("/api/delete-account",{method:"POST",headers:headers,body:JSON.stringify({password:password})});
+  var d=await r.json().catch(function(){return {};});
+  if(!r.ok||!d.ok){
+   toast("刪除失敗：" + (d.error||"未知錯誤"));
+   return;
+  }
+  // 清本地數據並登出
+  try{localStorage.removeItem("kongtalk_my_streams");}catch(e){}
+  try{localStorage.removeItem("kongtalk_profile");}catch(e){}
+  await doLogout();
+  go("s-home");
+  toast("帳號已刪除，後會有期");
+ }catch(e){
+  toast("刪除失敗，請檢查網絡再試");
+ }
+}
 function renderAuthArea(){
  var el=document.getElementById("auth-area");if(!el)return;
  if(_user){
   el.innerHTML='<div class="acct"><div class="acct-id"><span>登入帳號</span><span class="v">'+escHtml(emailToPhone(_user.email)||"")+'</span></div></div>'
-   +'<div class="mi" onclick="doLogout()">🚪 登出 <span class="arr">›</span></div>';
+   +'<div class="mi" onclick="doLogout()">🚪 登出 <span class="arr">›</span></div>'
+   +'<div class="mi danger" onclick="askDeleteAccount()">⚠️ 刪除帳號 <span class="arr">›</span></div>';
  }else{
   el.innerHTML='<div class="mi" onclick="go(\'s-auth\')">👤 登入／註冊 <span class="arr">›</span></div>';
  }
