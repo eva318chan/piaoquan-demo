@@ -609,7 +609,7 @@ function streamThumb(uid){return "https://videodelivery.net/"+uid+"/thumbnails/t
 function videoThumb(v){return (v.stream&&v.uid)?streamThumb(v.uid):("https://picsum.photos/seed/"+encodeURIComponent(v.av+v.t.length)+"/800/450");}
 function mediaHTML(v){
  if(v.stream&&v.uid) return '<img class="sthumb" src="'+streamThumb(v.uid)+'" style="width:100%;height:100%;object-fit:cover;display:block" onerror="this.style.display=\'none\'">';
- return '<video src="'+v.src+'" preload="metadata" playsinline loop></video>';
+ return '<video src="'+v.src+'" preload="metadata" playsinline></video>';
 }
 function renderFeed(){
  var h="";
