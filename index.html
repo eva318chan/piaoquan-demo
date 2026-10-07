@@ -716,7 +716,7 @@ function playVwrap(w){
   im.setAttribute("allowfullscreen","true");
   w.insertBefore(im,w.firstChild);
   /* SDK 載入失敗就沿用舊路：raw postMessage 嘅 ended 通知照做自動播下一條 */
-  if(window.Stream){try{wireStreamSDK(w,im,i,_wantSound&&(_tp||!_soundBlocked))}catch(e){}}
+  if(window.Stream){try{wireStreamSDK(w,im,i,_wantSound)}catch(e){}}
  }else{
   var vd=w.querySelector("video");
   if(vd){vd.muted=false;vd.onended=function(){playNextVideo(i);};var pr=vd.play();if(pr&&pr.catch)pr.catch(function(){vd.muted=true;vd.play().catch(function(){});});}
@@ -733,12 +733,12 @@ document.addEventListener("fullscreenchange",function(){
  var f=!!document.fullscreenElement;
  document.querySelectorAll(".vctrl .vfs").forEach(function(b){b.innerHTML=f?SVG_FSX:SVG_FS;});
 });
-/* 全站音量心智：_wantSound 用戶想唔想有聲（撳過喇叭掣會記住；hover 裝置預設唔想）；_soundBlocked 有聲播唔到就記住，免下次嘥時間；_tapPlay 標記今次係咪用戶親手撳播（手勢可試聲） */
-var _wantSound=true,_soundBlocked=false,_tapPlay=false;
+/* 全站音量心智：_wantSound 用戶想唔想有聲（撳過喇叭掣會記住；hover 裝置預設唔想）；_tapPlay 標記今次係咪用戶親手撳播（手勢可試聲） */
+var _wantSound=true,_tapPlay=false;
 try{if(window.matchMedia&&matchMedia("(hover:hover)").matches)_wantSound=false;}catch(e){}
 function wireStreamSDK(w,im,i,trySound){
  var player=Stream(im);w._sp=player;
- /* 開播意圖：想有聲＋（親手撳 or 未試過被擋）先試有聲，否則直接靜音，免播唔到 */
+ /* 開播意圖：想要聲就試有聲（唔得就停低等撳，唔退靜音）；想要靜音就直接靜音播 */
  try{player.muted=!trySound;var _pr=player.play();if(_pr&&_pr.catch)_pr.catch(function(){});}catch(e){}
  /* 透明 click 層冚住 iframe：收起原生控制列後，撳片身播/停要靠佢交返俾 togglePlay（iframe 會食咗 click） */
  var catcher=document.createElement("div");catcher.className="vcatch";
@@ -764,7 +764,7 @@ function wireStreamSDK(w,im,i,trySound){
  player.addEventListener("ended",function(){playNextVideo(i);});
  pp.addEventListener("click",function(e){e.stopPropagation();togglePlay(w);});
  vol.addEventListener("click",function(e){e.stopPropagation();try{
-  player.muted=!player.muted;_wantSound=!player.muted;_soundBlocked=false;setVol();
+  player.muted=!player.muted;_wantSound=!player.muted;setVol();
  }catch(_){}});
  fsb.addEventListener("click",function(e){e.stopPropagation();try{
   if(document.fullscreenElement){document.exitFullscreen();}
@@ -775,15 +775,9 @@ function wireStreamSDK(w,im,i,trySound){
  bar.addEventListener("pointerdown",seekEv);
  setPP();setVol();upd();
  w._syncVol=setVol; /* 俾 playVwrap 嘅 resume 路徑用：開聲後同步喇叭 icon */
- /* 開播保險：1.8 秒後仲 paused — 有聲播唔到就記住並退靜音（至少播到）；連靜音都唔郁先撥返 ▶ */
+ /* 開播保險：1.8 秒後仲係 paused（有聲被擋）— 唔退靜音，留大 ▶ 等用戶撳（撳＝手勢，有聲播） */
  setTimeout(function(){try{
-  if(player.paused){
-   if(trySound)_soundBlocked=true;
-   player.muted=true;
-   try{var _pr2=player.play();if(_pr2&&_pr2.catch)_pr2.catch(function(){});}catch(e){}
-   setVol();
-   setTimeout(function(){try{if(player.paused){w.classList.remove("playing");setPP();}}catch(e){}},1500);
-  }
+  if(player.paused){w.classList.remove("playing");setPP();}
  }catch(e){}},1800);
 }
 /* 睇完自動播下一條（跳過廣告位） */
@@ -813,7 +807,7 @@ function togglePlay(w){
   if(v&&v.stream&&w._sp){try{w._sp.pause()}catch(e){}return;} /* SDK：真暫停，保留進度唔重建 */
   stopMedia(w);restoreMedia(w,v);return;
  }
- _tapPlay=true;_soundBlocked=false;playVwrap(w); /* 手勢＝開聲許可：清掉被擋記憶，今次可試有聲 */
+ _tapPlay=true;playVwrap(w); /* 記低：今次係用戶親手撳播（手勢），可試有聲 */
 }
 /* 上推 feed：邊條片碌到正中就自動播嗰條 */
 var _feedObs=null;
