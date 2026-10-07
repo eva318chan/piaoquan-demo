@@ -698,11 +698,11 @@ function playNextVideo(curIdx){
   cards[n].scrollIntoView({block:"start",behavior:"smooth"});
  }catch(e){}
 }
-/* Cloudflare Stream 播完會 postMessage 通知 */
+/* Cloudflare Stream 播完會 postMessage 通知（SDK 實際送 {eventName:"ended"}；舊 d.event 寫法留作無害 fallback） */
 window.addEventListener("message",function(e){
  try{
   var d=typeof e.data==="string"?JSON.parse(e.data):e.data;
-  if(d&&d.event==="ended"){
+  if(d&&(d.eventName==="ended"||d.event==="ended")){
    var cur=document.querySelector(".vwrap.playing");
    if(cur)playNextVideo(+cur.getAttribute("data-i"));
   }
