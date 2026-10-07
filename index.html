@@ -1073,6 +1073,7 @@ function refreshMyStats(){
  else{var z=[0,0,0,0,0,0,0];chart("c1",z,"#07c160");chart("c2",z,"#f5a623");chart("c3",z,"#4a90ff");}
 }
 function go(id,tab){
+ pauseAllV(); /* 轉頁即停片：唔好跳走咗仲喺背後播兼有聲；返嚟首頁 observer 會自動播返 */
  document.querySelectorAll(".screen").forEach(function(s){s.classList.remove("active");});
  document.getElementById(id).classList.add("active");
  if(tab){document.querySelectorAll(".tab").forEach(function(t){t.classList.remove("on");});tab.classList.add("on");}
