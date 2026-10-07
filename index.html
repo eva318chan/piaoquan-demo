@@ -42,6 +42,7 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 .vknob{position:absolute;bottom:11px;left:0;width:11px;height:11px;margin-left:-5px;border-radius:50%;background:#07c160;box-shadow:0 1px 4px rgba(0,0,0,.5)}
 .vtime{flex:0 0 auto;color:#fff;font-size:11px;text-shadow:0 1px 3px rgba(0,0,0,.8);white-space:nowrap}
 .vcard.has-ctrl .vov{padding-bottom:64px}
+.vcatch{position:absolute;inset:0;z-index:2;touch-action:pan-y;cursor:pointer}
 /* 可撳元素：mouse 游標＋hover 反饋（桌面版唔使估邊度撳得） */
 .vwrap,.rbtn,.tab,.mi,.pill,button{cursor:pointer}
 @media (hover:hover){
@@ -662,6 +663,7 @@ function stopMedia(w){
  if(w._vctrl&&w._vctrl.parentNode){w._vctrl.parentNode.removeChild(w._vctrl);}
  w._vctrl=null;
  if(w.parentNode)w.parentNode.classList.remove("has-ctrl");
+ var ct=w.querySelector(".vcatch");if(ct)ct.remove();
  var f=w.querySelector("iframe");if(f)f.remove();
  var vd=w.querySelector("video");if(vd)vd.pause();
 }
@@ -732,6 +734,10 @@ document.addEventListener("fullscreenchange",function(){
 });
 function wireStreamSDK(w,im,i){
  var player=Stream(im);w._sp=player;
+ /* 透明 click 層冚住 iframe：收起原生控制列後，撳片身播/停要靠佢交返俾 togglePlay（iframe 會食咗 click） */
+ var catcher=document.createElement("div");catcher.className="vcatch";
+ catcher.onclick=function(){togglePlay(w);};
+ w.appendChild(catcher);
  var card=w.parentNode;card.classList.add("has-ctrl");
  var vc=document.createElement("div");vc.className="vctrl";
  vc.innerHTML='<div class="vcrow"><button class="vbtn vpp" aria-label="播放/暫停">'+SVG_PAUSE+'</button>'
