@@ -31,6 +31,10 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 #feed{height:calc(100vh - 70px);height:calc(100dvh - 70px);overflow-y:auto;scroll-snap-type:y mandatory;scrollbar-width:none;background:#000}
 #feed::-webkit-scrollbar{display:none}
 .vcard{position:relative;height:100%;margin:0;border-radius:0;overflow:hidden;box-shadow:none;scroll-snap-align:start;scroll-snap-stop:always;background:#000}
+.feedloading{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px}
+.feedskel{width:46px;height:46px;border-radius:50%;border:3px solid #222;border-top-color:#07c160;animation:feedspin .9s linear infinite}
+@keyframes feedspin{to{transform:rotate(360deg)}}
+.feedloadtxt{color:#666;font-size:14px}
 .vwrap{position:absolute;inset:0;background:#000;touch-action:pan-y}
 .vwrap video{width:100%;height:100%;object-fit:cover;display:block;touch-action:pan-y}
 .vwrap iframe{touch-action:pan-y}
@@ -1280,7 +1284,9 @@ try{
   if(s&&s.uid) VIDEOS.unshift({t:s.t||"我嘅新短片",p:"0次播放",d:"--:--",a:s.a||"講圈用戶",av:s.av||"講",uid:s.uid,mine:true,stream:true});
  }
 }catch(e){}
-renderFeed();renderWorks();refreshSocial();
+/* 開機：feed 先留白（載入中），等社群影片載入完成先一次過渲染，避免半秒閃示範片 */
+document.getElementById("feed").innerHTML='<div class="vcard feedloading"><div class="feedskel"></div><div class="feedloadtxt">載入影片中…</div></div>';
+renderWorks();refreshSocial();
 applyProfile();applySettings();initEditForm();
 if(document.getElementById("s-home").classList.contains("active")){var _tb0=document.querySelector(".topbar");if(_tb0)_tb0.style.display="none";}
 chart("c1",[3,0,9,0,0,0,0],"#07c160");
@@ -1528,21 +1534,23 @@ async function loadCommunity(){
   renderFeed();renderWorks();
  }catch(e){}
 }
-/* 開機：還原登入狀態＋載入社群影片 */
+/* 開機：還原登入狀態＋載入社群影片（完成先一次過渲染，免半秒閃示範片） */
 (async function(){
  renderAuthArea();
- if(!_sb)return;
  try{
-  var s=await _sb.auth.getSession();
-  if(s.data&&s.data.session){_user=s.data.session.user;await refreshSbToken();_shareBase=shares;await loadSbProfile();}
+  if(_sb){
+   var s=await _sb.auth.getSession();
+   if(s.data&&s.data.session){_user=s.data.session.user;await refreshSbToken();_shareBase=shares;await loadSbProfile();}
+  }
  }catch(e){}
  renderAuthArea();
- await loadCommunity();
- refreshSocial();
+ try{await loadCommunity();}catch(e){}
+ renderFeed();renderWorks();refreshSocial(); /* 保險：社群載入失敗／零片都出示範 feed，唔會留白 */
+ handleDeepLink();
 })();
 
-/* 分享 deep link：#v=stream_uid（新短連結）或 #v=片名（舊連結，兼容）→ 自動碌去嗰條片並播放；#u= → 去「我」頁 */
-(function(){
+/* 分享 deep link：#v=stream_uid（新短連結）或 #v=片名（舊連結，兼容）→ 自動碌去嗰條片並播放；#u= → 去「我」頁（開機 feed 渲染完成後先處理，免目標片未載入） */
+function handleDeepLink(){
  try{
   var h=location.hash||"";
   var mv=h.match(/#v=([^&]+)/);
@@ -1561,7 +1569,7 @@ async function loadCommunity(){
   }
   if(/#u=/.test(h)){go("s-profile",document.querySelectorAll(".tab")[4]);}
  }catch(e){}
-})();
+}
 </script>
 </body>
 </html>
