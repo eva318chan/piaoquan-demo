@@ -736,7 +736,7 @@ function wireStreamSDK(w,im,i){
  var player=Stream(im);w._sp=player;
  /* 透明 click 層冚住 iframe：收起原生控制列後，撳片身播/停要靠佢交返俾 togglePlay（iframe 會食咗 click） */
  var catcher=document.createElement("div");catcher.className="vcatch";
- catcher.onclick=function(){togglePlay(w);};
+ catcher.onclick=function(e){if(e)e.stopPropagation();togglePlay(w);};
  w.appendChild(catcher);
  var card=w.parentNode;card.classList.add("has-ctrl");
  var vc=document.createElement("div");vc.className="vctrl";
@@ -766,6 +766,8 @@ function wireStreamSDK(w,im,i){
  function seekEv(e){try{e.preventDefault();e.stopPropagation();var r=bar.getBoundingClientRect();var x=e.touches?e.touches[0].clientX:e.clientX;var f=Math.min(1,Math.max(0,(x-r.left)/r.width));var d=player.duration||0;if(d>0)player.currentTime=f*d;upd();}catch(_){}}
  bar.addEventListener("pointerdown",seekEv);
  setPP();setVol();upd();
+ /* 自動播被 browser 擋咗嘅話唔好留假「播緊」icon：1.8 秒後仲係 paused 就撥返 ▶ */
+ setTimeout(function(){try{if(player.paused){w.classList.remove("playing");setPP();}}catch(e){}},1800);
 }
 /* 睇完自動播下一條（跳過廣告位） */
 function playNextVideo(curIdx){
