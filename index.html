@@ -10,6 +10,7 @@
 <title>講圈 · 演示版</title>
 <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://embed.videodelivery.net/embed/sdk.latest.js"></script>
 <meta name="description" content="講圈 — 香港人講嘢嘅短片平台（演示版）">
 <meta property="og:type" content="website">
 <meta property="og:site_name" content="講圈">
@@ -31,6 +32,12 @@ body{font-family:-apple-system,BlinkMacSystemFont,"PingFang SC","Microsoft YaHei
 #feed{height:calc(100vh - 70px);height:calc(100dvh - 70px);overflow-y:auto;scroll-snap-type:y mandatory;scrollbar-width:none;background:#000}
 #feed::-webkit-scrollbar{display:none}
 .vcard{position:relative;height:100%;margin:0;border-radius:0;overflow:hidden;box-shadow:none;scroll-snap-align:start;scroll-snap-stop:always;background:#000}
+.vctrl{position:absolute;left:0;right:0;bottom:0;z-index:6;pointer-events:none}
+.vtime{color:#fff;font-size:11px;text-align:right;padding:0 12px 2px;text-shadow:0 1px 3px rgba(0,0,0,.8)}
+.vbar{position:relative;height:22px;pointer-events:auto;touch-action:none}
+.vbar::before{content:"";position:absolute;left:0;right:0;bottom:8px;height:3px;background:rgba(255,255,255,.28)}
+.vfill{position:absolute;left:0;bottom:8px;height:3px;width:0;background:#07c160}
+.vknob{position:absolute;bottom:9px;left:0;width:11px;height:11px;margin-left:-5px;border-radius:50%;background:#07c160;box-shadow:0 1px 4px rgba(0,0,0,.5)}
 .feedloading{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:14px}
 .feedskel{width:46px;height:46px;border-radius:50%;border:3px solid #222;border-top-color:#07c160;animation:feedspin .9s linear infinite}
 @keyframes feedspin{to{transform:rotate(360deg)}}
@@ -635,6 +642,9 @@ function renderFeed(){
  initFeedObserver();
 }
 function stopMedia(w){
+ if(w._sp){try{w._sp.pause()}catch(e){}w._sp=null;}
+ if(w._vctrl&&w._vctrl.parentNode){w._vctrl.parentNode.removeChild(w._vctrl);}
+ w._vctrl=null;
  var f=w.querySelector("iframe");if(f)f.remove();
  var vd=w.querySelector("video");if(vd)vd.pause();
 }
@@ -676,17 +686,36 @@ function playVwrap(w){
  var i=+w.getAttribute("data-i"),v=VIDEOS[i];
  bumpPlay(v);
  if(v&&v.stream&&v.uid){
-  /* Cloudflare Stream 播放器 */
+  /* 之前撳暫停過嘅 SDK 播放器：直接繼續播（保留進度，唔重建） */
+  if(w._sp){try{w._sp.play()}catch(e){}return;}
+  /* Cloudflare Stream 播放器（收起原生控制列，改用自家 slim 控制條，免俾標題欄冚住） */
   var im=document.createElement("iframe");
-  im.src="https://iframe.videodelivery.net/"+v.uid+"?autoplay=true";
+  im.src="https://iframe.videodelivery.net/"+v.uid+"?autoplay=true&controls=false";
   im.style.cssText="position:absolute;inset:0;width:100%;height:100%;border:0";
   im.setAttribute("allow","accelerometer;gyroscope;autoplay;encrypted-media;picture-in-picture");
   im.setAttribute("allowfullscreen","true");
   w.insertBefore(im,w.firstChild);
+  /* SDK 載入失敗就沿用舊路：raw postMessage 嘅 ended 通知照做自動播下一條 */
+  if(window.Stream){try{wireStreamSDK(w,im,i)}catch(e){}}
  }else{
   var vd=w.querySelector("video");
   if(vd){vd.muted=false;vd.onended=function(){playNextVideo(i);};var pr=vd.play();if(pr&&pr.catch)pr.catch(function(){vd.muted=true;vd.play().catch(function(){});});}
  }
+}
+/* Stream 自家控制條：進度＋時間＋撳住 seek；ended 經 SDK 可靠觸發自動播下一條 */
+function wireStreamSDK(w,im,i){
+ var player=Stream(im);w._sp=player;
+ var vc=document.createElement("div");vc.className="vctrl";
+ vc.innerHTML='<div class="vtime">0:00 / 0:00</div><div class="vbar"><div class="vfill"></div><div class="vknob"></div></div>';
+ w.parentNode.appendChild(vc);w._vctrl=vc;
+ var fill=vc.querySelector(".vfill"),knob=vc.querySelector(".vknob"),tm=vc.querySelector(".vtime"),bar=vc.querySelector(".vbar");
+ function fmt(s){s=Math.max(0,Math.floor(s||0));return Math.floor(s/60)+":"+("0"+(s%60)).slice(-2);}
+ function upd(){try{var d=player.duration||0,c=player.currentTime||0,p=d>0?Math.min(100,c/d*100):0;fill.style.width=p+"%";knob.style.left=p+"%";tm.textContent=fmt(c)+" / "+fmt(d);}catch(e){}}
+ player.addEventListener("timeupdate",upd);
+ player.addEventListener("ended",function(){playNextVideo(i);});
+ function seekEv(e){try{e.preventDefault();e.stopPropagation();var r=bar.getBoundingClientRect();var x=e.touches?e.touches[0].clientX:e.clientX;var f=Math.min(1,Math.max(0,(x-r.left)/r.width));var d=player.duration||0;if(d>0)player.currentTime=f*d;upd();}catch(_){}}
+ bar.addEventListener("pointerdown",seekEv);
+ upd();
 }
 /* 睇完自動播下一條（跳過廣告位） */
 function playNextVideo(curIdx){
@@ -698,7 +727,7 @@ function playNextVideo(curIdx){
   cards[n].scrollIntoView({block:"start",behavior:"smooth"});
  }catch(e){}
 }
-/* Cloudflare Stream 播完會 postMessage 通知（SDK 實際送 {eventName:"ended"}；舊 d.event 寫法留作無害 fallback） */
+/* Cloudflare Stream 播完會 postMessage 通知（後備：SDK 正常時由 wireStreamSDK 嘅 ended 事件處理；呢度 cover SDK 載入失敗嘅情況） */
 window.addEventListener("message",function(e){
  try{
   var d=typeof e.data==="string"?JSON.parse(e.data):e.data;
@@ -709,7 +738,12 @@ window.addEventListener("message",function(e){
  }catch(err){}
 });
 function togglePlay(w){
- if(w.classList.contains("playing")){w.classList.remove("playing");stopMedia(w);restoreMedia(w,VIDEOS[+w.getAttribute("data-i")]);return;}
+ var i=+w.getAttribute("data-i"),v=VIDEOS[i];
+ if(w.classList.contains("playing")){
+  w.classList.remove("playing");
+  if(v&&v.stream&&w._sp){try{w._sp.pause()}catch(e){}return;} /* SDK：真暫停，保留進度唔重建 */
+  stopMedia(w);restoreMedia(w,v);return;
+ }
  playVwrap(w);
 }
 /* 上推 feed：邊條片碌到正中就自動播嗰條 */
