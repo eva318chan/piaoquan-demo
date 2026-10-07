@@ -775,10 +775,6 @@ function wireStreamSDK(w,im,i,trySound){
  bar.addEventListener("pointerdown",seekEv);
  setPP();setVol();upd();
  w._syncVol=setVol; /* 俾 playVwrap 嘅 resume 路徑用：開聲後同步喇叭 icon */
- /* 還原開聲：播緊＋靜音＋用戶想要聲 → 試下直接開聲（有啲平台播緊嗰陣俾，唔得就維持靜音，無副作用） */
- setTimeout(function(){try{
-  if(_wantSound&&!player.paused&&player.muted){player.muted=false;if(!player.muted)_soundBlocked=false;setVol();}
- }catch(e){}},2600);
  /* 開播保險：1.8 秒後仲 paused — 有聲播唔到就記住並退靜音（至少播到）；連靜音都唔郁先撥返 ▶ */
  setTimeout(function(){try{
   if(player.paused){
